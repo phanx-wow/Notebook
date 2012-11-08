@@ -2,6 +2,7 @@
 --	Notebook
 --	Allows you to record and share notes in-game
 --	Written by Cirk of Doomhammer, December 2005, last updated August 2009
+--	Updated by Phanx
 --	http://www.wowinterface.com/downloads/info4544-CirksNotebook.html
 ------------------------------------------------------------------------
 
@@ -1971,10 +1972,10 @@ function Notebook.SlashCommand(text)
 			end
 
 		elseif (command == NOTEBOOK_COMMANDS.COMMAND_SHOW) then
-			NotebookFrame:Show()
+			ShowUIPanel(NotebookFrame)
 
 		elseif (command == NOTEBOOK_COMMANDS.COMMAND_HIDE) then
-			NotebookFrame:Hide()
+			HideUIPanel(NotebookFrame)
 
 		elseif (command == NOTEBOOK_COMMANDS.COMMAND_WELCOME) then
 			local ndata = Notebook.FindByTitle(_firstTimeNote.title, true)
@@ -2006,11 +2007,7 @@ function Notebook.SlashCommand(text)
 			end
 
 		elseif (command == "") then
-			if (NotebookFrame:IsVisible()) then
-				NotebookFrame:Hide()
-			else
-				NotebookFrame:Show()
-			end
+			ToggleFrame(NotebookFrame)
 
 		else
 			DEFAULT_CHAT_FRAME:AddMessage(NOTEBOOK_EM.ON..NOTEBOOK_NAME.." v"..NOTEBOOK_VERSION..NOTEBOOK_EM.OFF)
