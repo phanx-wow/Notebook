@@ -1,0 +1,14 @@
+## Interface: 40100
+## Version: 3.2.0
+
+## Title: Notebook |cff00ddbaMOD|r
+## Notes: Record and share notes in-game
+## Author: Cirk
+## X-Website: http://www.wowinterface.com/downloads/info4544-Notebook.html
+## SavedVariables: NotebookState
+
+Localization.lua
+Notebook.lua
+NotebookFrame.lua
+
+# Notebook.xml
