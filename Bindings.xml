@@ -1,0 +1,9 @@
+<Bindings>
+	<Binding name="NOTEBOOK_PANEL" header="NOTEBOOK_TITLE">
+		if NotebookFrame:IsVisible() then
+			HideUIPanel( NotebookFrame )
+		else
+			ShowUIPanel( NotebookFrame )
+		end
+	</Binding>
+</Bindings>
