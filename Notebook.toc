@@ -1,14 +1,17 @@
-## Interface: 40100
-## Version: 3.2.0
+## Interface: 50001
+## Version: 5.0.5.wowi:revision
 
-## Title: Notebook |cff00ddbaMOD|r
+## Title: Notebook
 ## Notes: Record and share notes in-game
-## Author: Cirk
+## Author: Phanx, Cirk
+## X-CompatibleLocales: deDE, enUS, esES, esMX, frFR, itIT, ptBR, koKR, ruRU, zhCN, zhTW
+## X-Localizations: enUS
 ## X-Website: http://www.wowinterface.com/downloads/info4544-Notebook.html
+## X-Curse-Project-ID: notebook
+## X-WoWI-ID: 4544
+
 ## SavedVariables: NotebookState
 
 Localization.lua
 Notebook.lua
 NotebookFrame.lua
-
-# Notebook.xml

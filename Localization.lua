@@ -2,12 +2,10 @@
 --	Notebook
 --	Allows you to record and share notes in-game
 --	Written by Cirk of Doomhammer, December 2005, last updated August 2009
+--	Updated by Phanx
 --	http://www.wowinterface.com/downloads/info4544-CirksNotebook.html
 ------------------------------------------------------------------------
-
-------------------------------------------------------------------------
---	Localization (English default)
-------------------------------------------------------------------------
+--	Localization
 
 BINDING_HEADER_NOTEBOOK_TITLE = "Notebook Bindings"
 BINDING_NAME_NOTEBOOK_PANEL = "Show Notebook"
