@@ -6,15 +6,15 @@
 --	http://www.wowinterface.com/downloads/info4544-CirksNotebook.html
 ------------------------------------------------------------------------
 
-Notebook = { }
+local NOTEBOOK, Notebook = ...
 NotebookState = { }
 
 ------------------------------------------------------------------------
 --	AddOn name and version
 ------------------------------------------------------------------------
 
-local NOTEBOOK_NAME = GetAddOnMetadata( "Notebook", "Title" )
-local NOTEBOOK_VERSION = GetAddOnMetadata( "Notebook", "Version" )
+local NOTEBOOK_NAME = GetAddOnMetadata( NOTEBOOK, "Title" )
+local NOTEBOOK_VERSION = GetAddOnMetadata( NOTEBOOK, "Version" )
 
 ------------------------------------------------------------------------
 --	Global constants
@@ -704,11 +704,12 @@ end
 --	Chat event parsing functions
 ------------------------------------------------------------------------
 
-function Notebook.ChatMessageHandler(channel)
+function Notebook.ChatMessageHandler(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14)
 	-- Called for raid, party, guild, whisper, and channel events.  Note that
 	-- system channels (e.g., General, Trade, etc.) are indicated by arg7
 	-- being non-zero, and are always ignored.  Similarly anything sent by
 	-- ourselves should also be ignored.
+	local channel = string.sub(event, 10)
 	if ((tonumber(arg7) ~= 0) or (arg2 == _playerName)) then
 		return
 	end
@@ -1190,7 +1191,9 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.text = NOTEBOOK_TEXT.SEND_TO_TARGET
 			info.value = NOTEBOOK_TEXT.SEND_TO_TARGET
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER_INFORM"].r * 255, ChatTypeInfo["WHISPER_INFORM"].g * 255, ChatTypeInfo["WHISPER_INFORM"].b * 255 )
-			if not UnitCanCooperate("player", "target") then
+			if UnitCanCooperate("player", "target") then
+				info.disabled = nil
+			else
 				info.disabled = 1
 			end
 			info.func = Notebook.Frame_DropdownSelect
@@ -1208,7 +1211,9 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.text = NOTEBOOK_TEXT.SEND_TO_PARTY
 			info.value = NOTEBOOK_TEXT.SEND_TO_PARTY
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["PARTY"].r * 255, ChatTypeInfo["PARTY"].g * 255, ChatTypeInfo["PARTY"].b * 255 )
-			if (GetNumPartyMembers() == 0) then
+			if IsInGroup() and not IsInRaid() then
+				info.disabled = nil
+			else
 				info.disabled = 1
 			end
 			info.func = Notebook.Frame_DropdownSelect
@@ -1218,7 +1223,9 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.text = NOTEBOOK_TEXT.SEND_TO_RAID
 			info.value = NOTEBOOK_TEXT.SEND_TO_RAID
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["RAID"].r * 255, ChatTypeInfo["RAID"].g * 255, ChatTypeInfo["RAID"].b * 255 )
-			if ((GetNumRaidMembers() == 0) or not (IsRaidLeader() or IsRaidOfficer())) then
+			if IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) then
+				info.disabled = nil
+			else
 				info.disabled = 1
 			end
 			info.func = Notebook.Frame_DropdownSelect
@@ -1228,7 +1235,9 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.text = NOTEBOOK_TEXT.SEND_TO_GUILD
 			info.value = NOTEBOOK_TEXT.SEND_TO_GUILD
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["GUILD"].r * 255, ChatTypeInfo["GUILD"].g * 255, ChatTypeInfo["GUILD"].b * 255 )
-			if (not IsInGuild()) then
+			if IsInGuild() then
+				info.disabled = nil
+			else
 				info.disabled = 1
 			end
 			info.func = Notebook.Frame_DropdownSelect
@@ -1795,16 +1804,16 @@ end
 --	OnEvent handler
 ------------------------------------------------------------------------
 
-function Notebook.OnEvent(self, event, arg1)
+function Notebook.OnEvent(self, event, ...)
 	if ((event == "CHAT_MSG_RAID") or
 		(event == "CHAT_MSG_RAID_LEADER") or
 		(event == "CHAT_MSG_PARTY") or
 		(event == "CHAT_MSG_GUILD") or
 		(event == "CHAT_MSG_WHISPER") or
 		(event == "CHAT_MSG_CHANNEL")) then
-		Notebook.ChatMessageHandler(string.sub(event, 10))
+		Notebook.ChatMessageHandler(event, ...)
 
-	elseif (event == "VARIABLES_LOADED") then
+	elseif (event == "ADDON_LOADED") and (...) == NOTEBOOK then
 		_serverName = GetRealmName()
 		Notebook.VariablesLoaded()
 		if (_serverName and _playerName) then
@@ -1877,7 +1886,7 @@ function NotebookSendNote(title, channel, target)
 		if (ndata) then
 			if ((NotebookFrame.selectedID ~= ndata.id) or not NotebookFrame.editing) then
 				if (channel == "RAID") then
-					if ((GetNumRaidMembers() > 0) and (IsRaidLeader() or IsRaidOfficer())) then
+					if IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) then
 						Notebook.SendNote(ndata, "RAID", nil)
 					else
 						if (DEFAULT_CHAT_FRAME) then
@@ -1885,7 +1894,7 @@ function NotebookSendNote(title, channel, target)
 						end
 					end
 				elseif (channel == "PARTY") then
-					if (GetNumPartyMembers() > 0) then
+					if IsInGroup() and not IsInRaid() then
 						Notebook.SendNote(ndata, "PARTY", nil)
 					else
 						if (DEFAULT_CHAT_FRAME) then
@@ -1893,7 +1902,7 @@ function NotebookSendNote(title, channel, target)
 						end
 					end
 				elseif (channel == "GUILD") then
-					if (IsInGuild()) then
+					if IsInGuild() then
 						Notebook.SendNote(ndata, "GUILD", nil)
 					else
 						if (DEFAULT_CHAT_FRAME) then
@@ -1992,7 +2001,7 @@ function Notebook.SlashCommand(text)
 
 		elseif (command == NOTEBOOK_COMMANDS.COMMAND_STATUS) then
 			UpdateAddOnMemoryUsage()
-			DEFAULT_CHAT_FRAME:AddMessage(string.format(NOTEBOOK_COMMANDS.COMMAND_STATUS_FORMAT, _notesCount, GetAddOnMemoryUsage("Notebook") + 0.5))
+			DEFAULT_CHAT_FRAME:AddMessage(string.format(NOTEBOOK_COMMANDS.COMMAND_STATUS_FORMAT, _notesCount, GetAddOnMemoryUsage(NOTEBOOK) + 0.5))
 
 		elseif (command == NOTEBOOK_COMMANDS.COMMAND_DEBUGON) then
 			_debugFrame = DEFAULT_CHAT_FRAME

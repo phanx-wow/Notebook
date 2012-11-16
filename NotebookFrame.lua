@@ -6,6 +6,8 @@
 --	http://www.wowinterface.com/downloads/info4544-CirksNotebook.html
 ------------------------------------------------------------------------
 
+local NOTEBOOK, Notebook = ...
+
 local frame = CreateFrame("Frame", "NotebookFrame", UIParent)
 UIPanelWindows["NotebookFrame"] = { area = "left", pushable = 3, whileDead = 1, xoffset = -16, yoffset = 12 }
 -- HideUIPanel(NotebookFrame)
