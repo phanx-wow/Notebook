@@ -7,8 +7,8 @@
 ------------------------------------------------------------------------
 --	Localization
 
-BINDING_HEADER_NOTEBOOK_TITLE = "Notebook Bindings"
-BINDING_NAME_NOTEBOOK_PANEL = "Show Notebook"
+BINDING_HEADER_NOTEBOOK_TITLE = "Notebook"
+BINDING_NAME_NOTEBOOK_PANEL = "Toggle Notebook"
 
 NOTEBOOK_EM = {
 	ON = "|cffffff00",

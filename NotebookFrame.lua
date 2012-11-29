@@ -1,157 +1,166 @@
 ------------------------------------------------------------------------
 --	Notebook
 --	Allows you to record and share notes in-game
---	Written by Cirk of Doomhammer, December 2005, last updated August 2009
---	Updated by Phanx with permission
---	http://www.wowinterface.com/downloads/info4544-CirksNotebook.html
+--	Written by Cirk of Doomhammer, 2005-2009
+--	Updated by Phanx with permission, 2012
+--	http://www.wowinterface.com/downloads/info4544-Notebook.html
 ------------------------------------------------------------------------
 
 local NOTEBOOK, Notebook = ...
 
-local frame = CreateFrame("Frame", "NotebookFrame", UIParent)
+local NotebookFrame = CreateFrame("Frame", "NotebookFrame", UIParent)
 UIPanelWindows["NotebookFrame"] = { area = "left", pushable = 3, whileDead = 1, xoffset = -16, yoffset = 12 }
+tinsert(UISpecialFrames, "NotebookFrame")
 -- HideUIPanel(NotebookFrame)
--- frame:Hide()
+-- NotebookFrame:Hide()
 
-frame:SetWidth(384)
-frame:SetHeight(512)
-frame:SetHitRectInsets(10, 34, 8, 72)
-frame:SetToplevel(true)
-frame:EnableMouse(true)
-frame:SetMovable(true)
+NotebookFrame:SetWidth(384)
+NotebookFrame:SetHeight(512)
+NotebookFrame:SetHitRectInsets(10, 34, 8, 72)
+NotebookFrame:SetToplevel(true)
+NotebookFrame:EnableMouse(true)
+NotebookFrame:SetMovable(true)
 
-frame:SetScript("OnShow", Notebook.Frame_OnShow)
+NotebookFrame:SetScript("OnShow", function(self)
+	-- Set the frame title and "mine" tab tooltip with the player's name
+	local _playerName = UnitName("player")
+	NotebookFrame.TitleText:SetText(string.format(NOTEBOOK_TEXT.FRAME_TITLE_FORMAT, _playerName))
+	NotebookFrame.FilterTab2.tooltipText = string.format(NOTEBOOK_TEXT.MINE_TAB_TOOLTIP_FORMAT, _playerName)
+	Notebook.Frame_UpdateList()
+end)
 
+------------------------------------------------------------------------
 --  BACKGROUND TEXTURES
 
-local topLeftIcon = frame:CreateTexture(nil, "BACKGROUND")
+local topLeftIcon = NotebookFrame:CreateTexture(nil, "BACKGROUND")
 topLeftIcon:SetPoint("TOPLEFT", 7, -6)
 topLeftIcon:SetWidth(60)
 topLeftIcon:SetHeight(60)
 SetPortraitToTexture(topLeftIcon, "Interface\\FriendsFrame\\FriendsFrameScrollIcon")
-frame.topLeftIcon = topLeftIcon
+NotebookFrame.TopLeftIcon = topLeftIcon
 
-local topLeft = frame:CreateTexture(nil, "BORDER")
+local topLeft = NotebookFrame:CreateTexture(nil, "BORDER")
 topLeft:SetPoint("TOPLEFT")
 topLeft:SetWidth(256)
 topLeft:SetHeight(256)
 topLeft:SetTexture("Interface\\PaperDollInfoFrame\\UI-Character-General-TopLeft")
-frame.topLeft = topLeft
+NotebookFrame.TopLeft = topLeft
 
-local topRight = frame:CreateTexture(nil, "BORDER")
+local topRight = NotebookFrame:CreateTexture(nil, "BORDER")
 topRight:SetPoint("TOPRIGHT")
 topRight:SetWidth(128)
 topRight:SetHeight(256)
 topRight:SetTexture("Interface\\PaperDollInfoFrame\\UI-Character-General-TopRight")
-frame.topRight = topRight
+NotebookFrame.BopRight = topRight
 
-local bottomLeft = frame:CreateTexture(nil, "BORDER")
+local bottomLeft = NotebookFrame:CreateTexture(nil, "BORDER")
 bottomLeft:SetPoint("BOTTOMLEFT")
 bottomLeft:SetWidth(256)
 bottomLeft:SetHeight(256)
 bottomLeft:SetTexture("Interface\\PaperDollInfoFrame\\SkillFrame-BotLeft")
-frame.bottomLeft = bottomLeft
+NotebookFrame.BottomLeft = bottomLeft
 
-local bottomRight = frame:CreateTexture(nil, "BORDER")
+local bottomRight = NotebookFrame:CreateTexture(nil, "BORDER")
 bottomRight:SetPoint("BOTTOMRIGHT")
 bottomRight:SetWidth(128)
 bottomRight:SetHeight(256)
 bottomRight:SetTexture("Interface\\PaperDollInfoFrame\\SkillFrame-BotRight")
-frame.bottomRight = bottomRight
+NotebookFrame.BottomRight = bottomRight
 
-local barLeft = frame:CreateTexture(nil, "ARTWORK")
+local barLeft = NotebookFrame:CreateTexture(nil, "ARTWORK")
 barLeft:SetPoint("TOPLEFT", 15, -186)
 barLeft:SetWidth(256)
 barLeft:SetHeight(16)
 barLeft:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-HorizontalBar")
 barLeft:SetTexCoord(0, 1, 0, 0.25)
-frame.barLeft = barLeft
+NotebookFrame.BarLeft = barLeft
 
-local barRight = frame:CreateTexture(nil, "ARTWORK")
+local barRight = NotebookFrame:CreateTexture(nil, "ARTWORK")
 barRight:SetPoint("LEFT", barLeft, "RIGHT")
 barRight:SetWidth(75)
 barRight:SetHeight(16)
 barRight:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-HorizontalBar")
 barRight:SetTexCoord(0, 0.29296875, 0.25, 0.5)
-frame.barRight = barRight
+NotebookFrame.BarRight = barRight
 
+------------------------------------------------------------------------
 --  TITLE TEXT
 
-local title = frame:CreateFontString("$parentTitleText", "ARTWORK", "GameFontNormal")
+local title = NotebookFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 title:SetPoint("TOP", 0, -17)
-frame.titleText = title
+NotebookFrame.TitleText = title
 
+------------------------------------------------------------------------
 --  DRAG REGION
 
-local drag = CreateFrame("Frame", "$parentDragFrame", frame)
+local drag = CreateFrame("Frame", nil, NotebookFrame)
 drag:SetPoint("TOP", 8, -10)
 drag:SetWidth(256)
 drag:SetHeight(28)
-frame.dragFrame = drag
+NotebookFrame.DragFrame = drag
 
 drag:SetScript("OnMouseDown", function(self, button)
 	if button == "LeftButton" then
-		local frame = self:GetParent()
-		frame.isMoving = true
-		frame:StartMoving()
+		NotebookFrame.isMoving = true
+		NotebookFrame:StartMoving()
 		CloseDropDownMenus()
 		-- Clear editBox focus while moving because of problems with the empty
 		-- editbox (editBox only updates the actual cursor position when there
 		-- is text in the editBox.  Also, if the editbox was empty, then give
 		-- it a temporary space character while we are moving it.
-		if NotebookDescriptionEditBox.hasFocus then
-			frame.editHadFocus = true
-			NotebookDescriptionEditBox:ClearFocus()
+		if NotebookFrame.DescriptionEditBox.hasFocus then
+			NotebookFrame.editHadFocus = true
+			NotebookFrame.DescriptionEditBox:ClearFocus()
 		end
-		if NotebookDescriptionEditBox:GetNumLetters() == 0 then
-			frame.editWasEmpty = true
-			NotebookDescriptionEditBox:SetText(" ")
+		if NotebookFrame.DescriptionEditBox:GetNumLetters() == 0 then
+			NotebookFrame.editWasEmpty = true
+			NotebookFrame.DescriptionEditBox:SetText(" ")
 		end
 	end
 end)
 
 drag:SetScript("OnMouseUp", function(self, button)
-	local frame = self:GetParent()
-	if frame.isMoving then
-		frame:StopMovingOrSizing()
-		frame:SetUserPlaced(false)
-		frame.isMoving = nil
+	if NotebookFrame.isMoving then
+		NotebookFrame:StopMovingOrSizing()
+		NotebookFrame:SetUserPlaced(false)
+		NotebookFrame.isMoving = nil
 		-- Restore the editbox's focus and empty status if needed
-		if frame.editWasEmpty then
-			NotebookDescriptionEditBox:SetText("")
-			frame.editWasEmpty = nil
+		if NotebookFrame.editWasEmpty then
+			NotebookFrame.DescriptionEditBox:SetText("")
+			NotebookFrame.editWasEmpty = nil
 		end
-		if frame.editHadFocus then
-			frame.editHadFocus = nil
-			NotebookDescriptionEditBox:SetFocus()
+		if NotebookFrame.editHadFocus then
+			NotebookFrame.editHadFocus = nil
+			NotebookFrame.DescriptionEditBox:SetFocus()
 		end
 	end
 end)
 
 drag:SetScript("OnHide", function(self)
-	local frame = self:GetParent()
-	if frame.isMoving then
-		frame:StopMovingOrSizing()
-		frame:SetUserPlaced(false)
-		frame.isMoving = nil
+	if NotebookFrame.isMoving then
+		NotebookFrame:StopMovingOrSizing()
+		NotebookFrame:SetUserPlaced(false)
+		NotebookFrame.isMoving = nil
 		-- Restore the editbox's empty status if needed
-		if frame.editWasEmpty then
-			NotebookDescriptionEditBox:SetText("")
-			frame.editWasEmpty = nil
+		if NotebookFrame.editWasEmpty then
+			NotebookFrame.DescriptionEditBox:SetText("")
+			NotebookFrame.editWasEmpty = nil
 		end
-		frame.editHadFocus = nil
+		NotebookFrame.editHadFocus = nil
 	end
 end)
 
+------------------------------------------------------------------------
 --  CLOSE X BUTTON
 
-local closeX = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+local closeX = CreateFrame("Button", nil, NotebookFrame, "UIPanelCloseButton")
 closeX:SetPoint("TOPRIGHT", -30, -8)
-frame.closeXButton = closeX
+NotebookFrame.CloseButtonX = closeX
 
+------------------------------------------------------------------------
 --  CLOSE BUTTON
 
-local close = CreateFrame("Button", "$parentCloseButton", frame, "UIPanelButtonTemplate")
+local close = CreateFrame("Button", nil, NotebookFrame, "UIPanelButtonTemplate")
 close:SetPoint("BOTTOMRIGHT", -42, 80)
 close:SetWidth(80)
 close:SetHeight(22)
@@ -160,11 +169,12 @@ close:SetHighlightFontObject(GameFontHighlightSmall)
 close:SetDisabledFontObject(GameFontDisableSmall)
 close:SetScript("OnClick", HideParentPanel)
 close:SetText(CLOSE)
-frame.closeButton = close
+NotebookFrame.CloseButton = close
 
+------------------------------------------------------------------------
 --  SAVE BUTTON
 
-local save = CreateFrame("Button", "$parentSaveButton", frame, "UIPanelButtonTemplate")
+local save = CreateFrame("Button", nil, NotebookFrame, "UIPanelButtonTemplate")
 save:SetPoint("BOTTOMLEFT", 20, 80)
 save:SetWidth(60)
 save:SetHeight(22)
@@ -175,11 +185,12 @@ save:SetScript("OnClick", Notebook.Frame_SaveButtonOnClick)
 save:SetText(NOTEBOOK_TEXT.SAVE_BUTTON)
 save.tooltipText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
 save.newbieText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
-frame.saveButton = save
+NotebookFrame.SaveButton = save
 
+------------------------------------------------------------------------
 --  CANCEL BUTTON
 
-local cancel = CreateFrame("Button", "$parentCancelButton", frame, "UIPanelButtonTemplate")
+local cancel = CreateFrame("Button", nil, NotebookFrame, "UIPanelButtonTemplate")
 cancel:SetPoint("BOTTOMLEFT", save, "BOTTOMRIGHT")
 cancel:SetWidth(60)
 cancel:SetHeight(22)
@@ -190,11 +201,14 @@ cancel:SetScript("OnClick", Notebook.Frame_CancelButtonOnClick)
 cancel:SetText(NOTEBOOK_TEXT.CANCEL_BUTTON)
 cancel.tooltipText = NOTEBOOK_TEXT.CANCEL_BUTTON_TOOLTIP
 cancel.newbieText = NOTEBOOK_TEXT.CANCEL_BUTTON_TOOLTIP
-frame.cancelButton = cancel
+NotebookFrame.CancelButton = cancel
 
+------------------------------------------------------------------------
 --  NEW BUTTON
 
-local new = CreateFrame("Button", "$parentNewButton", frame, "UIPanelButtonTemplate")
+local new = CreateFrame("Button", nil, NotebookFrame, "UIPanelButtonTemplate")
+NotebookFrame.NewButton = new
+
 new:SetPoint("TOPRIGHT", -46, -49)
 new:SetWidth(60)
 new:SetHeight(22)
@@ -205,27 +219,35 @@ new:SetScript("OnClick", Notebook.Frame_NewButtonOnClick)
 new:SetText(NOTEBOOK_TEXT.NEW_BUTTON)
 new.tooltipText = NOTEBOOK_TEXT.NEW_BUTTON_TOOLTIP
 new.newbieText = NOTEBOOK_TEXT.NEW_BUTTON_TOOLTIP
-frame.newButton = new
 
+------------------------------------------------------------------------
 -- CAN SEND OPTION BUTTON
 
-local canSend = CreateFrame("CheckButton", "$parentCanSendCheckButton", frame, "UICheckButtonTemplate")
-canSend:SetPoint("LEFT", cancel, "RIGHT")
-canSend:SetWidth(18)
-canSend:SetHeight(18)
-canSend:SetHitRectInsets(0, -70, 0, 0)
+local canSend = CreateFrame("CheckButton", nil, NotebookFrame)
+NotebookFrame.CanSendCheckButton = canSend
 
-local text = canSend:CreateFontString("NotebookFrameCanSendText", "OVERLAY")
-text:SetPoint("LEFT", canSend, "RIGHT", -1, 0)
-canSend:SetFontString(text)
+-- Can't inherit from UICheckButtonTemplate because it requires a global name.
+canSend:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up")
+canSend:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down")
+canSend:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight")
+canSend:GetHighlightTexture():SetBlendMode("ADD")
+canSend:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check")
+canSend:SetDisabledCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check-Disabled")
+
+canSend.Text = canSend:CreateFontString(nil, "ARTWORK")
+canSend.Text:SetPoint("LEFT", canSend, "RIGHT", -2, 0)
+canSend:SetFontString(canSend.Text)
 canSend:SetNormalFontObject(GameFontNormalSmall)
 canSend:SetHighlightFontObject(GameFontHighlightSmall)
 canSend:SetDisabledFontObject(GameFontDisableSmall)
 
+canSend:SetPoint("LEFT", cancel, "RIGHT")
+canSend:SetSize(18, 18)
+canSend:SetHitRectInsets(0, -70, 0, 0)
+
 canSend:SetText(NOTEBOOK_TEXT.CHECK_SEND_BUTTON)
 canSend.tooltipOnText = NOTEBOOK_TEXT.CHECK_CAN_SEND_TOOLTIP
 canSend.tooltipOffText = NOTEBOOK_TEXT.CHECK_NOT_SEND_TOOLTIP
-frame.canSendCheckButton = canSend
 
 canSend:SetScript("OnEnter", function(self)
 	local text
@@ -255,9 +277,20 @@ canSend:SetScript("OnClick", function(self, button)
 	if text and GameTooltip:IsOwned(self) then
 		GameTooltip:SetText(text)
 	end
-	Notebook.Frame_CanSendCheckOnClick(self)
+
+	CloseDropDownMenus()
+
+	local ndata = Notebook.FindByID(NotebookFrame.selectedID)
+	if ndata then
+		if ndata.send then
+			ndata.send = nil
+		else
+			ndata.send = true
+		end
+	end
 end)
 
+------------------------------------------------------------------------
 --  FILTER TAB BUTTONS
 
 local function tab_OnShow(self)
@@ -277,7 +310,7 @@ local function tab_OnClick(self)
 	Notebook.Frame_TabButtonOnClick(self:GetID())
 end
 
-local filterTab1 = CreateFrame("Button", "$parentFilterTab1", frame, "TabButtonTemplate")
+local filterTab1 = CreateFrame("Button", "$parentFilterTab1", NotebookFrame, "TabButtonTemplate")
 filterTab1:SetPoint("TOPLEFT", 70, -39)
 filterTab1:SetID(1)
 filterTab1:SetScript("OnShow", tab_OnShow)
@@ -287,9 +320,9 @@ filterTab1:SetScript("OnClick", tab_OnClick)
 filterTab1:SetText(NOTEBOOK_TEXT.ALL_TAB)
 filterTab1.tooltipText = NOTEBOOK_TEXT.ALL_TAB_TOOLTIP
 PanelTemplates_SelectTab(filterTab1)
-frame.filterTab1 = filterTab1
+NotebookFrame.FilterTab1 = filterTab1
 
-local filterTab2 = CreateFrame("Button", "$parentFilterTab2", frame, "TabButtonTemplate")
+local filterTab2 = CreateFrame("Button", "$parentFilterTab2", NotebookFrame, "TabButtonTemplate")
 filterTab2:SetPoint("TOPLEFT", filterTab1, "TOPRIGHT")
 filterTab2:SetID(2)
 filterTab2:SetScript("OnShow", tab_OnShow)
@@ -298,9 +331,9 @@ filterTab2:SetScript("OnLeave", GameTooltip_Hide)
 filterTab2:SetScript("OnClick", tab_OnClick)
 filterTab2:SetText(NOTEBOOK_TEXT.MINE_TAB)
 PanelTemplates_DeselectTab(filterTab2)
-frame.filterTab2 = filterTab2
+NotebookFrame.FilterTab2 = filterTab2
 
-local filterTab3 = CreateFrame("Button", "$parentFilterTab3", frame, "TabButtonTemplate")
+local filterTab3 = CreateFrame("Button", "$parentFilterTab3", NotebookFrame, "TabButtonTemplate")
 filterTab3:SetPoint("TOPLEFT", filterTab2, "TOPRIGHT")
 filterTab3:SetID(3)
 filterTab3:SetScript("OnShow", tab_OnShow)
@@ -310,33 +343,37 @@ filterTab3:SetScript("OnClick", tab_OnClick)
 filterTab3:SetText(NOTEBOOK_TEXT.RECENT_TAB)
 filterTab3.tooltipText = NOTEBOOK_TEXT.RECENT_TAB_TOOLTIP
 PanelTemplates_DeselectTab(filterTab3)
-frame.filterTab3 = filterTab3
+NotebookFrame.FilterTab3 = filterTab3
 
+------------------------------------------------------------------------
 --  LIST FRAME
 
-local listFrame = CreateFrame("Frame", "$parentListFrame", frame)
+local listFrame = CreateFrame("Frame", "$parentListFrame", NotebookFrame)
 listFrame:SetPoint("TOPLEFT", 20, -74)
 listFrame:SetWidth(320)
 listFrame:SetHeight(112)
-frame.listFrame = listFrame
+NotebookFrame.ListFrame = listFrame
 
+------------------------------------------------------------------------
 --  LIST BUTTONS
 
 local function createListButton(id)
-	local button = CreateFrame("Button", "NotebookListFrameButton" .. id, listFrame)
+	local button = CreateFrame("Button", "NotebookListButton"..id, listFrame)
 	button:SetWidth(298)
 	button:SetHeight(NOTEBOOK_LIST_BUTTON_HEIGHT)
 	button:SetID(id)
 
-	local text = button:CreateFontString("$parentTitleText", "ARTWORK")
-	text:SetPoint("LEFT", 10, -2)
-	text:SetWidth(288)
-	text:SetHeight(14)
-	text:SetJustifyH("LEFT")
+	local text = button:CreateFontString(nil, "OVERLAY")
 	button:SetFontString(text)
 	button:SetNormalFontObject(GameFontNormalSmall)
 	button:SetHighlightFontObject(GameFontHighlightSmall)
 	button:SetDisabledFontObject(GameFontDisableSmall)
+	text:ClearAllPoints()
+	text:SetPoint("LEFT", button, 10, -2)
+	text:SetWidth(288)
+	text:SetHeight(14)
+	text:SetJustifyH("LEFT")
+	button.TitleText = text
 
 	local highlight = button:CreateTexture("$parentHighlight", "HIGHLIGHT")
 	highlight:SetPoint("LEFT", 2, -2)
@@ -344,6 +381,7 @@ local function createListButton(id)
 	highlight:SetHeight(NOTEBOOK_LIST_BUTTON_HEIGHT)
 	highlight:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight2", "ADD")
 	button:SetHighlightTexture(highlight)
+	button.TitleHighlight = highlight
 
 	button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	button:SetScript("OnClick", function(self, button)
@@ -363,8 +401,6 @@ local function createListButton(id)
 end
 
 local listButtons = { }
-frame.listButtons = listButtons
-
 for id = 1, NOTEBOOK_LIST_BUTTON_COUNT do
 	local button = createListButton(id)
 	if id == 1 then
@@ -375,13 +411,16 @@ for id = 1, NOTEBOOK_LIST_BUTTON_COUNT do
 	listButtons[id] = button
 end
 
---  LIST SCROLL BAR
+NotebookFrame.ListButtons = listButtons
 
-local scrollFrame = CreateFrame("ScrollFrame", "NotebookListFrameScrollFrame", listFrame, "UIPanelScrollFrameTemplate")
+------------------------------------------------------------------------
+--  LIST SCROLL BAR -- TODO: Does this need a global name?
+
+local scrollFrame = CreateFrame("ScrollFrame", "NotebookFrameListScrollFrame", listFrame, "UIPanelScrollFrameTemplate")
 scrollFrame:SetPoint("TOPLEFT", 0, -2)
 scrollFrame:SetWidth(296)
 scrollFrame:SetHeight(112)
-frame.listScrollFrame = scrollFrame
+NotebookFrame.ListScrollFrame = scrollFrame
 
 scrollFrame:SetScript("OnVerticalScroll", function(self, offset)
 	FauxScrollFrame_OnVerticalScroll(self, offset, NOTEBOOK_LIST_BUTTON_HEIGHT, Notebook.Frame_UpdateList)
@@ -391,43 +430,45 @@ local scrollChild = CreateFrame("Frame", "$parentScrollChildFrame", scrollFrame)
 scrollChild:SetWidth(296)
 scrollChild:SetHeight(112)
 scrollFrame:SetScrollChild(scrollChild)
-frame.listScrollChild = scrollChild
+NotebookFrame.ListScrollChild = scrollChild
 
+------------------------------------------------------------------------
 --  DESCRIPTION FRAME
 
-local description = CreateFrame("Frame", "NotebookDescriptionFrame", frame)
+local description = CreateFrame("Frame", nil, NotebookFrame)
 description:SetPoint("TOPLEFT", 25, -202)
 description:SetWidth(317)
 description:SetHeight(204)
-frame.descriptionFrame = description
+NotebookFrame.DescriptionFrame = description
 
+------------------------------------------------------------------------
 --  EDIT SCROLL FRAME
 
-local editScroll = CreateFrame("ScrollFrame", "NotebookFrameEditScrollFrame", description)
+local editScroll = CreateFrame("ScrollFrame", "$parentEditScrollFrame", description)
 editScroll:SetPoint("TOPLEFT")
 editScroll:SetWidth(314)
 editScroll:SetHeight(204)
 editScroll.scrollBarHideable = true
-frame.editScrollFrame = editScroll
+NotebookFrame.EditScrollFrame = editScroll
 
 editScroll:SetScript("OnMouseWheel", ScrollFrameTemplate_OnMouseWheel)
 editScroll:SetScript("OnVerticalScroll", Notebook.Frame_OnVerticalScroll)
 
 editScroll:EnableMouse(true)
 editScroll:SetScript("OnMouseUp", function(self, button)
-	-- Focus the edit box when clicking anywhere in the description frame,
+	-- Focus the edit box when clicking anywhere in the description NotebookFrame,
 	-- since the edit box magically resizes itself based on the height of
 	-- its contents since some patches ago.
-	if button == "LeftButton" and NotebookDescriptionEditBox:IsShown()
-	and not NotebookDescriptionEditBox:IsMouseOver() and not NotebookFrameEditScrollFrameScrollBar:IsMouseOver() then
-		NotebookDescriptionEditBox:SetFocus()
+	if button == "LeftButton" and NotebookFrame.DescriptionEditBox:IsShown()
+	and not NotebookFrame.DescriptionEditBox:IsMouseOver() and not NotebookFrame.EditScrollBar:IsMouseOver() then
+		NotebookFrame.DescriptionEditBox:SetFocus()
 	end
 end)
 
 local editBar = CreateFrame("Slider", "$parentScrollBar", editScroll, "UIPanelScrollBarTemplate")
 editBar:SetPoint("TOPRIGHT", 0, -14)
 editBar:SetPoint("BOTTOMRIGHT", 0, 14)
-frame.editScrollBar = editBar
+NotebookFrame.EditScrollFrame.ScrollBar = editBar
 
 ScrollFrame_OnLoad(editScroll)
 ScrollFrame_OnScrollRangeChanged(editScroll, 0)
@@ -448,7 +489,7 @@ editBox:SetIndentedWordWrap(false)
 -- baseline (e.g., p, y, q, etc.)
 editBox:SetTextInsets(0, -2, 0, 2)
 editScroll:SetScrollChild(editBox)
-frame.editBox = editBox
+NotebookFrame.EditBox = editBox
 
 editScroll:SetScript("OnScrollRangeChanged", function(self, xOffset, yOffset)
 	ScrollFrame_OnScrollRangeChanged(self, xOffset, yOffset)
@@ -467,7 +508,7 @@ editBox:SetScript("OnCursorChanged", function(self, x, y, width, height)
 end)
 
 editBox:SetScript("OnTextChanged", function(self, isUserInput)
-	-- A minor kludge to move to the top of the scroll-frame
+	-- A minor kludge to move to the top of the scroll-NotebookFrame
 	-- when resetting the text in the edit box
 	if self.textReset then
 		if self.textResetToEmpty then
@@ -501,6 +542,7 @@ editBox:SetScript("OnEditFocusGained", function(self)
 	self.hasFocus = true
 end)
 
+------------------------------------------------------------------------
 --  TEXT SCROLL FRAME (for non-editable text)
 
 local textScroll = CreateFrame("ScrollFrame", "NotebookFrameTextScrollFrame", description)
@@ -509,7 +551,7 @@ textScroll:SetWidth(306)
 textScroll:SetHeight(204)
 textScroll:Hide()
 textScroll.scrollBarHideable = true
-frame.textScrollFrame = textScroll
+NotebookFrame.TextScrollFrame = textScroll
 
 textScroll:SetScript("OnMouseWheel", ScrollFrameTemplate_OnMouseWheel)
 textScroll:SetScript("OnVerticalScroll", Notebook.Frame_OnVerticalScroll)
@@ -524,7 +566,7 @@ end)
 local textBar = CreateFrame("Slider", "$parentScrollBar", textScroll, "UIPanelScrollBarTemplate")
 textBar:SetPoint("TOPLEFT", textScroll, "TOPRIGHT", -4, -14)
 textBar:SetPoint("BOTTOMLEFT", textScroll, "BOTTOMRIGHT", -4, 14)
-frame.textScrollBar = textBar
+NotebookFrame.TextScrollFrame.ScrollBar = textBar
 
 ScrollFrame_OnLoad(textScroll)
 ScrollFrame_OnScrollRangeChanged(textScroll, 0)
@@ -535,26 +577,27 @@ textChild:SetWidth(296)
 textChild:SetHeight(204)
 textChild:EnableMouse(true)
 textScroll:SetScrollChild(textChild)
-frame.textScrollChild = textChild
+NotebookFrame.TextScrollChild = textChild
 
-local textBox = textChild:CreateFontString("NotebookDescriptionTextBox", "OVERLAY", "GameFontNormal")
+local textBox = textChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 textBox:SetPoint("TOPLEFT", 10, -2)
 textBox:SetWidth(286)
 textBox:SetHeight(0)
 textBox:SetJustifyH("LEFT")
 textBox:SetIndentedWordWrap(false)
-frame.textBox = textBox
+NotebookFrame.TextBox = textBox
 
+------------------------------------------------------------------------
 --  DROPDOWN MENU
 
-local dropdown = CreateFrame("Frame", "NotebookDropDown", frame, "UIDropDownMenuTemplate")
-frame.dropdown = dropdown
+local dropdown = CreateFrame("Frame", "NotebookDropDown", NotebookFrame, "UIDropDownMenuTemplate")
+NotebookFrame.DropDown = dropdown
 
 ------------------------------------------------------------------------
 --	Addon
 ------------------------------------------------------------------------
 
-frame:SetScript("OnEvent", Notebook.OnEvent)
+NotebookFrame:SetScript("OnEvent", Notebook.OnEvent)
 
-Notebook.OnLoad(frame)
-Notebook.Frame_OnLoad(frame)
+Notebook.OnLoad(NotebookFrame)
+Notebook.Frame_OnLoad(NotebookFrame)
