@@ -1108,6 +1108,7 @@ function Notebook.Frame_DropdownInitialize(self)
 		-- flagged for sending.
 		info.text = NOTEBOOK_TEXT.SEND_OPTION
 		info.notCheckable = 1
+		info.keepShownOnClick = 1
 		if (NotebookFrame.editing or _sendCooldownTimer or not ndata.send) then
 			info.disabled = 1
 			info.hasArrow = nil
@@ -1201,10 +1202,12 @@ function Notebook.Frame_DropdownInitialize(self)
 
 			-- Send to channel
 			info.text = NOTEBOOK_TEXT.SEND_TO_CHANNEL
+			info.value = NOTEBOOK_TEXT.SEND_TO_CHANNEL
 			info.colorCode = nil
 			info.disabled = nil
+			info.func = nil
 			info.hasArrow = 1
-			info.notCheckable = 1
+			info.keepShownOnClick = 1
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 		end
 

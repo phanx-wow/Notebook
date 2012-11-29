@@ -108,13 +108,13 @@ drag:SetScript("OnMouseDown", function(self, button)
 		-- editbox (editBox only updates the actual cursor position when there
 		-- is text in the editBox.  Also, if the editbox was empty, then give
 		-- it a temporary space character while we are moving it.
-		if NotebookFrame.DescriptionEditBox.hasFocus then
+		if NotebookFrame.EditBox.hasFocus then
 			NotebookFrame.editHadFocus = true
-			NotebookFrame.DescriptionEditBox:ClearFocus()
+			NotebookFrame.EditBox:ClearFocus()
 		end
-		if NotebookFrame.DescriptionEditBox:GetNumLetters() == 0 then
+		if NotebookFrame.EditBox:GetNumLetters() == 0 then
 			NotebookFrame.editWasEmpty = true
-			NotebookFrame.DescriptionEditBox:SetText(" ")
+			NotebookFrame.EditBox:SetText(" ")
 		end
 	end
 end)
@@ -126,12 +126,12 @@ drag:SetScript("OnMouseUp", function(self, button)
 		NotebookFrame.isMoving = nil
 		-- Restore the editbox's focus and empty status if needed
 		if NotebookFrame.editWasEmpty then
-			NotebookFrame.DescriptionEditBox:SetText("")
+			NotebookFrame.EditBox:SetText("")
 			NotebookFrame.editWasEmpty = nil
 		end
 		if NotebookFrame.editHadFocus then
 			NotebookFrame.editHadFocus = nil
-			NotebookFrame.DescriptionEditBox:SetFocus()
+			NotebookFrame.EditBox:SetFocus()
 		end
 	end
 end)
@@ -143,7 +143,7 @@ drag:SetScript("OnHide", function(self)
 		NotebookFrame.isMoving = nil
 		-- Restore the editbox's empty status if needed
 		if NotebookFrame.editWasEmpty then
-			NotebookFrame.DescriptionEditBox:SetText("")
+			NotebookFrame.EditBox:SetText("")
 			NotebookFrame.editWasEmpty = nil
 		end
 		NotebookFrame.editHadFocus = nil
@@ -459,9 +459,9 @@ editScroll:SetScript("OnMouseUp", function(self, button)
 	-- Focus the edit box when clicking anywhere in the description NotebookFrame,
 	-- since the edit box magically resizes itself based on the height of
 	-- its contents since some patches ago.
-	if button == "LeftButton" and NotebookFrame.DescriptionEditBox:IsShown()
-	and not NotebookFrame.DescriptionEditBox:IsMouseOver() and not NotebookFrame.EditScrollBar:IsMouseOver() then
-		NotebookFrame.DescriptionEditBox:SetFocus()
+	if button == "LeftButton" and NotebookFrame.EditBox:IsShown()
+	and not NotebookFrame.EditBox:IsMouseOver() and not NotebookFrame.EditScrollBar:IsMouseOver() then
+		NotebookFrame.EditBox:SetFocus()
 	end
 end)
 
@@ -473,7 +473,7 @@ NotebookFrame.EditScrollFrame.ScrollBar = editBar
 ScrollFrame_OnLoad(editScroll)
 ScrollFrame_OnScrollRangeChanged(editScroll, 0)
 
-local editBox = CreateFrame("EditBox", "NotebookDescriptionEditBox", editScroll)
+local editBox = CreateFrame("EditBox", "NotebookEditBox", editScroll)
 editBox:SetPoint("TOPLEFT")
 editBox:SetWidth(292)
 editBox:SetHeight(204)
