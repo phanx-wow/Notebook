@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 --	Notebook
 --	Allows you to record and share notes in-game
---	Written by Cirk of Doomhammer, December 2005, last updated August 2009
---	Updated by Phanx
---	http://www.wowinterface.com/downloads/info4544-CirksNotebook.html
+--	Written by Cirk of Doomhammer, 2005-2009
+--	Updated by Phanx with permission, 2012
+--	http://www.wowinterface.com/downloads/info4544-Notebook.html
 ------------------------------------------------------------------------
 
 local NOTEBOOK, Notebook = ...
@@ -11,21 +11,18 @@ NotebookState = { }
 
 ------------------------------------------------------------------------
 --	AddOn name and version
-------------------------------------------------------------------------
 
 local NOTEBOOK_NAME = GetAddOnMetadata( NOTEBOOK, "Title" )
 local NOTEBOOK_VERSION = GetAddOnMetadata( NOTEBOOK, "Version" )
 
 ------------------------------------------------------------------------
 --	Global constants
-------------------------------------------------------------------------
 
 NOTEBOOK_LIST_BUTTON_COUNT = 7				-- number of buttons in list frame
 NOTEBOOK_LIST_BUTTON_HEIGHT = 16			-- height of each button in list frame
 
 ------------------------------------------------------------------------
 --	Local constants
-------------------------------------------------------------------------
 
 local NOTEBOOK_DROPDOWN_MAX_CHARS = 48		-- maximum characters in dropdown title
 local NOTEBOOK_CHANNEL_VALUE_FORMAT = "%s:%d:%s"
@@ -52,7 +49,6 @@ local NOTEBOOK_MAX_STRING_LENGTH = 768		-- If we go over 900 characters or so (e
 
 ------------------------------------------------------------------------
 --	Color information
-------------------------------------------------------------------------
 
 local _colorKnown        = { r = 1,   g = 0.82, b = 0,   a = 0.6 }	-- GameFontNormal yellow ("a" used for highlight alpha)
 local _colorNotKnown     = { r = 0.8, g = 0.8,  b = 0.8, a = 0.6 }	-- Light grey ("a" used for highlight alpha)
@@ -61,17 +57,16 @@ local _colorTextDisabled = { r = 0.5, g = 0.5,  b = 0.5 }			-- Light grey
 
 ------------------------------------------------------------------------
 --	Local variables
-------------------------------------------------------------------------
 
-local NotebookFrame = nil					-- The frame pointer
-local _serverName = nil					-- set to current realm when loaded
-local _playerName = nil					-- set to current playername when known
-local _debugFrame = nil					-- debug output chat frame
+local NotebookFrame					-- The frame pointer
+local _serverName					-- set to current realm when loaded
+local _playerName					-- set to current playername when known
+local _debugFrame					-- debug output chat frame
 
-local _original_ChatFrameEditBox_IsVisible = nil	-- original ChatFrameEditBox:IsVisible()
-local _original_ChatFrameEditBox_Insert = nil		-- original ChatFrameEditBox:Insert()
+local _original_ChatFrameEditBox_IsVisible	-- original ChatFrameEditBox:IsVisible()
+local _original_ChatFrameEditBox_Insert		-- original ChatFrameEditBox:Insert()
 
-local _notesList = { }
+local _notesList
 --	notes contents:
 --		title			text of title
 --		author			who provided or last edited the text
@@ -84,35 +79,33 @@ local _notesList = { }
 --		send			true if can send, nil otherwise
 --		update			true if this is an update for an existing known note, nil otherwise
 
-local _notesCount = 0					-- count of how many notes are in notesList
-local _notesLastID = 0					-- last note ID used
-local _filteredList = { }				-- filtered list of notes, contains indices into notesList
+local _notesCount = 0			-- count of how many notes are in notesList
+local _notesLastID = 0			-- last note ID used
+local _filteredList = { }		-- filtered list of notes, contains indices into notesList
 local _filteredCount = 0
 local _filterBy = NOTEBOOK_TEXT.ALL_TAB
 
-local _sendInProgress = nil				-- set when sending a message to someone (nil otherwise)
-local _sendCooldownTimer = nil			-- set to time to send next line or to allow next send (nil if not used)
-local _sendLines = { }					-- the pending lines to be sent
-local _sendChannel = nil				-- channel to use ("GUILD", "PARTY", "CHANNEL", etc.)
-local _sendLanguage = nil				-- language to use for send
-local _sendTarget = nil					-- target for send
-local _lastPlayer = nil					-- last player we sent a note to
-local _currentTitle =  nil				-- current title to be edited (if there is one)
+local _sendInProgress			-- set when sending a message to someone (nil otherwise)
+local _sendCooldownTimer		-- set to time to send next line or to allow next send (nil if not used)
+local _sendLines = { }			-- the pending lines to be sent
+local _sendChannel				-- channel to use ("GUILD", "PARTY", "CHANNEL", etc.)
+local _sendTarget				-- target for send
+local _lastPlayer				-- last player we sent a note to
+local _currentTitle				-- current title to be edited (if there is one)
 
-local _firstTimeLoad = nil				-- set to true if this Addon has not been run on the current server yet
+local _firstTimeLoad			-- set to true if this Addon has not been run on the current server yet
 
-local _receiveInProgress = nil			-- true when receiving a message
-local _receiveTimer = nil				-- set to an expiration time when receiving
-local _receiveSender = nil				-- set to the name of the player we are listening to
-local _receiveChannel = nil				-- set to the channel we are listening to
-local _receiveTarget = nil				-- set to the channel # we are listening to (for chat channels)
-local _receiveLinesExpected = 0			-- number of lines expected
-local _receiveLines = { }				-- lines so far received
-local _receiveTitle = nil				-- title of new note
+local _receiveInProgress		-- true when receiving a message
+local _receiveTimer				-- set to an expiration time when receiving
+local _receiveSender			-- set to the name of the player we are listening to
+local _receiveChannel			-- set to the channel we are listening to
+local _receiveTarget			-- set to the channel # we are listening to (for chat channels)
+local _receiveLinesExpected = 0		-- number of lines expected
+local _receiveLines = { }		-- lines so far received
+local _receiveTitle				-- title of new note
 
 ------------------------------------------------------------------------
 --	Configuration flags
-------------------------------------------------------------------------
 
 local _addSavedToRecent = true		-- false means that only sent and received notes go in the
 									-- recent tab, true would add recently saved notes also
@@ -138,12 +131,12 @@ local _notebookPlayerNamePopup = {
 		editBox:SetText(Notebook.GetPopupData("PLAYER"))
 		editBox:HighlightText()
 		editBox:SetFocus()
-		NotebookFrameNewButton:Disable()
+		NotebookFrame.NewButton:Disable()
 	end,
 	OnHide = function(self)
 		local editBox = self.editBox or _G[self:GetName().."EditBox"]
 		editBox:SetText("")
-		NotebookFrameNewButton:Enable()
+		NotebookFrame.NewButton:Enable()
 		ChatEdit_FocusActiveWindow()
 	end,
 	OnAccept = function(self, data)
@@ -174,12 +167,12 @@ local _notebookNewTitlePopup = {
 		editBox:SetText(Notebook.GetPopupData("TITLE"))
 		editBox:HighlightText()
 		editBox:SetFocus()
-		NotebookFrameNewButton:Disable()
+		NotebookFrame.NewButton:Disable()
 	end,
 	OnHide = function(self)
 		local editBox = self.editBox or _G[self:GetName().."EditBox"]
 		editBox:SetText("")
-		NotebookFrameNewButton:Enable()
+		NotebookFrame.NewButton:Enable()
 		ChatEdit_FocusActiveWindow()
 	end,
 	OnAccept = function(self, data)
@@ -681,7 +674,7 @@ function Notebook.SendNote(ndata, channel, target)
 	local lines, numLines = Notebook.ConvertToLines(ndata.description, NOTEBOOK_MAX_NUM_LINES, _debugFrame)
 	-- Format title string with our "secret" notebook code for any other
 	-- notebooks to recognize.
-	SendChatMessage(Notebook.GenerateSignature(ndata.title, numLines), channel, _sendLanguage, target)
+	SendChatMessage(Notebook.GenerateSignature(ndata.title, numLines), channel, nil, target)
 	if (numLines > 0) then
 		_sendInProgress = true
 		_sendCooldownTimer = GetTime() + NOTEBOOK_SEND_LINE_COOLDOWN
@@ -761,7 +754,7 @@ function Notebook.ChatMessageHandler(event, arg1, arg2, arg3, arg4, arg5, arg6, 
 				end
 				if (addNote) then
 					if (DEFAULT_CHAT_FRAME) then
-						DEFAULT_CHAT_FRAME:AddMessage(string.format(NOTEBOOK_TEXT.NOTE_RECEIVED_FORMAT, _receiveTitle, _receiveSender))
+						DEFAULT_CHAT_FRAME:AddMessage(format(NOTEBOOK_TEXT.NOTE_RECEIVED_FORMAT, _receiveTitle, _receiveSender))
 					end
 					Notebook.Add(_receiveTitle, _receiveSender, date(NOTEBOOK_GETDATE_FORMAT), description, false, true, true)
 				end
@@ -786,11 +779,6 @@ function Notebook.GetNextParam(text)
 	return text
 end
 
-function Notebook.CheckLoadedVariables()
-	-- Make sure that all loaded variables have valid values and performs any
-	-- fixups required for version to version changes of Notebook
-end
-
 ------------------------------------------------------------------------
 --	Initialization functions
 ------------------------------------------------------------------------
@@ -803,15 +791,10 @@ function Notebook.VariablesLoaded()
 		NotebookState.Notes = { }
 		_firstTimeLoad = true
 	end
+	_notesList = NotebookState.Notes
 end
 
 function Notebook.PlayerLogin()
-	-- Process the loaded variables (and do past version cleanups)
-	Notebook.CheckLoadedVariables()
-
-	-- Use default language for sending (nil means default)
-	_sendLanguage = nil
-
 	-- Load notes
 	Notebook.LoadData()
 	if (_firstTimeLoad) then
@@ -857,31 +840,31 @@ function Notebook.Frame_SetDescriptionText(text, known)
 	-- in NotebookFrame object itself, so that this can be checked for easily
 	-- when changing between tabs or knowing when to start an edit.
 	if (known) then
-		NotebookFrameTextScrollFrame:Hide()
-		NotebookFrameEditScrollFrame:Show()
-		NotebookDescriptionEditBox:ClearFocus()
+		NotebookFrame.TextScrollFrame:Hide()
+		NotebookFrame.EditScrollFrame:Show()
+		NotebookFrame.EditBox:ClearFocus()
 		if (text == "") then
 			-- Set a fake string into the editbox, noting that it is important
 			-- that this string doesn't match what the editbox has in it
 			-- already (or else it won't generate a OnTextUpdate event) so we
 			-- use a non-visible non-enterable character simply to avoid
 			-- having to check the current contents.
-			NotebookDescriptionEditBox.textResetToEmpty = true
-			NotebookDescriptionEditBox:SetText(NOTEBOOK_SEND_PREFIX)
+			NotebookFrame.EditBox.textResetToEmpty = true
+			NotebookFrame.EditBox:SetText(NOTEBOOK_SEND_PREFIX)
 		else
-			NotebookDescriptionEditBox:SetText(text)
-			NotebookDescriptionEditBox:SetCursorPosition(0)
+			NotebookFrame.EditBox:SetText(text)
+			NotebookFrame.EditBox:SetCursorPosition(0)
 		end
-		NotebookDescriptionEditBox.textReset = true
-		NotebookDescriptionEditBox.cursorOffset = 0
-		ScrollingEdit_OnUpdate( NotebookDescriptionEditBox, 0, NotebookDescriptionEditBox:GetParent() )
+		NotebookFrame.EditBox.textReset = true
+		NotebookFrame.EditBox.cursorOffset = 0
+		ScrollingEdit_OnUpdate( NotebookFrame.EditBox, 0, NotebookFrame.EditBox:GetParent() )
 	else
-		NotebookDescriptionEditBox:ClearFocus()
-		NotebookFrameEditScrollFrame:Hide()
-		NotebookFrameTextScrollFrame:Show()
-		NotebookDescriptionTextBox:SetText(text)
-		NotebookFrameTextScrollFrameScrollBar:SetValue(0)
-		NotebookFrameTextScrollFrame:UpdateScrollChildRect()
+		NotebookFrame.EditBox:ClearFocus()
+		NotebookFrame.EditScrollFrame:Hide()
+		NotebookFrame.TextScrollFrame:Show()
+		NotebookFrame.TextBox:SetText(text)
+		NotebookFrame.TextScrollFrame.ScrollBar:SetValue(0)
+		NotebookFrame.TextScrollFrame:UpdateScrollChildRect()
 	end
 end
 
@@ -889,20 +872,20 @@ function Notebook.Frame_SetCanSendCheckbox(enable, send)
 	-- Sets whether the Can-send checkbox is enabled or not, and if enabled,
 	-- whether it should be checked or not
 	if (enable) then
-		NotebookFrameCanSendCheckButton:SetChecked(send)
-		NotebookFrameCanSendCheckButton:Enable()
-		NotebookFrameCanSendText:SetTextColor(_colorTextEnabled.r, _colorTextEnabled.g, _colorTextEnabled.b)
-		if (GameTooltip:IsOwned(NotebookFrameCanSendCheckButton)) then
+		NotebookFrame.CanSendCheckButton:SetChecked(send)
+		NotebookFrame.CanSendCheckButton:Enable()
+		NotebookFrame.CanSendCheckButton.Text:SetTextColor(_colorTextEnabled.r, _colorTextEnabled.g, _colorTextEnabled.b)
+		if (GameTooltip:IsOwned(NotebookFrame.CanSendCheckButton)) then
 			if (send) then
-				GameTooltip:SetText(NotebookFrameCanSendCheckButton.tooltipOnText)
+				GameTooltip:SetText(NotebookFrame.CanSendCheckButton.tooltipOnText)
 			else
-				GameTooltip:SetText(NotebookFrameCanSendCheckButton.tooltipOffText)
+				GameTooltip:SetText(NotebookFrame.CanSendCheckButton.tooltipOffText)
 			end
 		end
 	else
-		NotebookFrameCanSendCheckButton:SetChecked(nil)
-		NotebookFrameCanSendCheckButton:Disable()
-		NotebookFrameCanSendText:SetTextColor(_colorTextDisabled.r, _colorTextDisabled.g, _colorTextDisabled.b)
+		NotebookFrame.CanSendCheckButton:SetChecked(nil)
+		NotebookFrame.CanSendCheckButton:Disable()
+		NotebookFrame.CanSendCheckButton.Text:SetTextColor(_colorTextDisabled.r, _colorTextDisabled.g, _colorTextDisabled.b)
 	end
 end
 
@@ -910,56 +893,43 @@ function Notebook.Frame_UpdateButtons(editing, known, update)
 	-- Sets the status of the Add, Save, Cancel, Update buttons as required
 	-- based on whether the current entry is known, being edited, etc.
 	if (editing) then
-		NotebookFrameSaveButton:Enable()
-		NotebookFrameSaveButton:SetScript( "OnClick", Notebook.Frame_SaveButtonOnClick )
-		NotebookFrameSaveButton:SetText( NOTEBOOK_TEXT.SAVE_BUTTON )
-		NotebookFrameSaveButton.tooltipText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
-		NotebookFrameSaveButton.newbieText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
-		NotebookFrameCancelButton:Enable()
+		NotebookFrame.SaveButton:Enable()
+		NotebookFrame.SaveButton:SetScript( "OnClick", Notebook.Frame_SaveButtonOnClick )
+		NotebookFrame.SaveButton:SetText( NOTEBOOK_TEXT.SAVE_BUTTON )
+		NotebookFrame.SaveButton.tooltipText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton.newbieText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
+		NotebookFrame.CancelButton:Enable()
 	elseif (known) then
-		NotebookFrameSaveButton:Disable()
-		NotebookFrameSaveButton:SetScript( "OnClick", Notebook.Frame_SaveButtonOnClick )
-		NotebookFrameSaveButton:SetText( NOTEBOOK_TEXT.SAVE_BUTTON )
-		NotebookFrameSaveButton.tooltipText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
-		NotebookFrameSaveButton.newbieText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
-		NotebookFrameCancelButton:Disable()
+		NotebookFrame.SaveButton:Disable()
+		NotebookFrame.SaveButton:SetScript( "OnClick", Notebook.Frame_SaveButtonOnClick )
+		NotebookFrame.SaveButton:SetText( NOTEBOOK_TEXT.SAVE_BUTTON )
+		NotebookFrame.SaveButton.tooltipText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton.newbieText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
+		NotebookFrame.CancelButton:Disable()
 	elseif (update) then
-		NotebookFrameSaveButton:Enable()
-		NotebookFrameSaveButton:SetScript( "OnClick", Notebook.Frame_UpdateButtonOnClick )
-		NotebookFrameSaveButton:SetText( NOTEBOOK_TEXT.UPDATE_BUTTON )
-		NotebookFrameSaveButton.tooltipText = NOTEBOOK_TEXT.UPDATE_BUTTON_TOOLTIP
-		NotebookFrameSaveButton.newbieText = NOTEBOOK_TEXT.UPDATE_BUTTON_TOOLTIP
-		NotebookFrameCancelButton:Disable()
+		NotebookFrame.SaveButton:Enable()
+		NotebookFrame.SaveButton:SetScript( "OnClick", Notebook.Frame_UpdateButtonOnClick )
+		NotebookFrame.SaveButton:SetText( NOTEBOOK_TEXT.UPDATE_BUTTON )
+		NotebookFrame.SaveButton.tooltipText = NOTEBOOK_TEXT.UPDATE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton.newbieText = NOTEBOOK_TEXT.UPDATE_BUTTON_TOOLTIP
+		NotebookFrame.CancelButton:Disable()
 	else
-		NotebookFrameSaveButton:Enable()
-		NotebookFrameSaveButton:SetScript( "OnClick", Notebook.Frame_AddButtonOnClick )
-		NotebookFrameSaveButton:SetText( NOTEBOOK_TEXT.ADD_BUTTON )
-		NotebookFrameSaveButton.tooltipText = NOTEBOOK_TEXT.ADD_BUTTON_TOOLTIP
-		NotebookFrameSaveButton.newbieText = NOTEBOOK_TEXT.ADD_BUTTON_TOOLTIP
-		NotebookFrameCancelButton:Disable()
+		NotebookFrame.SaveButton:Enable()
+		NotebookFrame.SaveButton:SetScript( "OnClick", Notebook.Frame_AddButtonOnClick )
+		NotebookFrame.SaveButton:SetText( NOTEBOOK_TEXT.ADD_BUTTON )
+		NotebookFrame.SaveButton.tooltipText = NOTEBOOK_TEXT.ADD_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton.newbieText = NOTEBOOK_TEXT.ADD_BUTTON_TOOLTIP
+		NotebookFrame.CancelButton:Disable()
 	end
 end
 
 function Notebook.Frame_OnLoad(self)
-	-- Make our frame closable with the ESC key
-	tinsert(UISpecialFrames, "NotebookFrame")
-
-	-- Set the Save and Cancel button initial states
-	Notebook.Frame_UpdateButtons(nil, true)
-
 	-- Set the Can-send check button initial state
 	Notebook.Frame_SetCanSendCheckbox()
 
 	-- Set the text colors of the editbox and textbox
-	NotebookDescriptionEditBox:SetTextColor(_colorKnown.r, _colorKnown.g, _colorKnown.b)
-	NotebookDescriptionTextBox:SetTextColor(_colorNotKnown.r, _colorNotKnown.g, _colorNotKnown.b)
-end
-
-function Notebook.Frame_OnShow(self)
-	-- Set the frame title and "mine" tab tooltip with the player's name
-	NotebookFrameTitleText:SetText(string.format(NOTEBOOK_TEXT.FRAME_TITLE_FORMAT, _playerName))
-	NotebookFrameFilterTab2.tooltipText = string.format(NOTEBOOK_TEXT.MINE_TAB_TOOLTIP_FORMAT, _playerName)
-	Notebook.Frame_UpdateList()
+	NotebookFrame.EditBox:SetTextColor(_colorKnown.r, _colorKnown.g, _colorKnown.b)
+	NotebookFrame.TextBox:SetTextColor(_colorNotKnown.r, _colorNotKnown.g, _colorNotKnown.b)
 end
 
 function Notebook.Frame_UpdateList(self, offset, autoScroll)
@@ -971,7 +941,7 @@ function Notebook.Frame_UpdateList(self, offset, autoScroll)
 	if (not NotebookFrame:IsShown()) then
 		return
 	end
-	local currentOffset = FauxScrollFrame_GetOffset(NotebookListFrameScrollFrame)
+	local currentOffset = FauxScrollFrame_GetOffset(NotebookFrame.ListScrollFrame)
 	if (not offset) then
 		offset = currentOffset
 	end
@@ -1000,18 +970,18 @@ function Notebook.Frame_UpdateList(self, offset, autoScroll)
 		end
 	end
 	if (offset ~= currentOffset) then
-		FauxScrollFrame_SetOffset(NotebookListFrameScrollFrame, offset)
-		NotebookListFrameScrollFrameScrollBar:SetValue(offset * NOTEBOOK_LIST_BUTTON_HEIGHT)
+		FauxScrollFrame_SetOffset(NotebookFrame.ListScrollFrame, offset)
+		NotebookFrame.ListScrollBar:SetValue(offset * NOTEBOOK_LIST_BUTTON_HEIGHT)
 	end
 
 	-- Update buttons
 	NotebookFrame.selectedButton = nil
 	for i = 1, NOTEBOOK_LIST_BUTTON_COUNT do
-		local button = _G["NotebookListFrameButton"..i]
+		local button = NotebookFrame.ListButtons[i]
 		local index = i + offset
 		if (index <= _filteredCount) then
-			local titleText = _G["NotebookListFrameButton"..i.."TitleText"]
-			local titleHighlight = _G["NotebookListFrameButton"..i.."Highlight"]
+			local titleText = button.TitleText
+			local titleHighlight = button.TitleHighlight
 			local ndata = _notesList[_filteredList[index]]
 			button.nindex = _filteredList[index]
 			if (ndata.saved or (NotebookFrame.editing and (NotebookFrame.selectedID == ndata.id))) then
@@ -1036,20 +1006,20 @@ function Notebook.Frame_UpdateList(self, offset, autoScroll)
 			local tooltipText
 			if (ndata.known) then
 				if (ndata.author == _playerName) then
-					tooltipText = string.format(NOTEBOOK_TEXT.DETAILS_DATE_KNOWN_SAVED_FORMAT, Notebook.UnpackDate(ndata.date))
+					tooltipText = format(NOTEBOOK_TEXT.DETAILS_DATE_KNOWN_SAVED_FORMAT, Notebook.UnpackDate(ndata.date))
 				else
-					tooltipText = string.format(NOTEBOOK_TEXT.DETAILS_DATE_KNOWN_UPDATED_FORMAT, Notebook.UnpackDate(ndata.date), ndata.author)
+					tooltipText = format(NOTEBOOK_TEXT.DETAILS_DATE_KNOWN_UPDATED_FORMAT, Notebook.UnpackDate(ndata.date), ndata.author)
 				end
 			else
-				tooltipText = string.format(NOTEBOOK_TEXT.DETAILS_DATE_UNSAVED_FORMAT, Notebook.UnpackDate(ndata.date), ndata.author)
+				tooltipText = format(NOTEBOOK_TEXT.DETAILS_DATE_UNSAVED_FORMAT, Notebook.UnpackDate(ndata.date), ndata.author)
 			end
 			if (ndata.sent) then
-				tooltipText = tooltipText.."\n"..string.format(NOTEBOOK_TEXT.DETAILS_SENT_FORMAT, Notebook.UnpackDate(ndata.sent))
+				tooltipText = tooltipText.."\n"..format(NOTEBOOK_TEXT.DETAILS_SENT_FORMAT, Notebook.UnpackDate(ndata.sent))
 			end
 			if (not ndata.known) then
 				tooltipText = tooltipText.."\n"..NOTEBOOK_TEXT.DETAILS_NOT_KNOWN_TEXT
 			end
-			tooltipText = tooltipText.."\n"..string.format(NOTEBOOK_TEXT.DETAILS_SIZE_FORMAT, string.len(ndata.description))
+			tooltipText = tooltipText.."\n"..format(NOTEBOOK_TEXT.DETAILS_SIZE_FORMAT, string.len(ndata.description))
 			button.tooltipText = tooltipText
 			if (GameTooltip:IsOwned(button)) then
 				GameTooltip:SetText(button.tooltipText, 1, 1, 1)
@@ -1063,7 +1033,7 @@ function Notebook.Frame_UpdateList(self, offset, autoScroll)
 	end
 
 	-- Update scrollbar
-	FauxScrollFrame_Update(NotebookListFrameScrollFrame, _filteredCount, NOTEBOOK_LIST_BUTTON_COUNT, NOTEBOOK_LIST_BUTTON_HEIGHT)
+	FauxScrollFrame_Update(NotebookFrame.ListScrollFrame, _filteredCount, NOTEBOOK_LIST_BUTTON_COUNT, NOTEBOOK_LIST_BUTTON_HEIGHT)
 end
 
 function Notebook.Frame_ListButtonOnClick(self, clicked)
@@ -1085,7 +1055,7 @@ function Notebook.Frame_ListButtonOnClick(self, clicked)
 		if (NotebookFrame.editing) then
 			local pdata = Notebook.FindByID(NotebookFrame.selectedID)
 			if (pdata) then
-				local text = NotebookDescriptionEditBox:GetText()
+				local text = NotebookFrame.EditBox:GetText()
 				if (text ~= pdata.description) then
 					pdata.saved = text
 				else
@@ -1106,7 +1076,7 @@ function Notebook.Frame_ListButtonOnClick(self, clicked)
 		Notebook.Frame_UpdateList()
 	end
 	if (clicked == "RightButton") then
-		NotebookDescriptionEditBox:ClearFocus()
+		NotebookFrame.EditBox:ClearFocus()
 		NotebookDropDown.name = ndata.title
 		NotebookDropDown.noteIndex = self.nindex
 		NotebookDropDown.initialize = Notebook.Frame_DropdownInitialize
@@ -1123,6 +1093,8 @@ function Notebook.Frame_ListButtonOnClick(self, clicked)
 end
 
 function Notebook.Frame_DropdownInitialize(self)
+	local ChatTypeInfo = getmetatable(ChatTypeInfo).__index -- Blizzard stupidity in 5.1
+
 	-- Called by the UI dropdown code when building the dropdown menu, it sets
 	-- the UIDROPDOWNMENU_MENU_LEVEL (1 to N) and UIDROPDOWNMENU_MENU_VALUE
 	-- (set to passed text string) fields as needed for the various menus and
@@ -1190,19 +1162,15 @@ function Notebook.Frame_DropdownInitialize(self)
 			-- Send to target
 			info.text = NOTEBOOK_TEXT.SEND_TO_TARGET
 			info.value = NOTEBOOK_TEXT.SEND_TO_TARGET
-			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER_INFORM"].r * 255, ChatTypeInfo["WHISPER_INFORM"].g * 255, ChatTypeInfo["WHISPER_INFORM"].b * 255 )
-			if UnitCanCooperate("player", "target") then
-				info.disabled = nil
-			else
-				info.disabled = 1
-			end
+			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER"].r * 255, ChatTypeInfo["WHISPER"].g * 255, ChatTypeInfo["WHISPER"].b * 255 )
+			info.disabled = (not UnitCanCooperate("player", "target")) and 1 or nil
 			info.func = Notebook.Frame_DropdownSelect
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 
 			-- Send to player
 			info.text = NOTEBOOK_TEXT.SEND_TO_PLAYER
 			info.value = NOTEBOOK_TEXT.SEND_TO_PLAYER
-			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER_INFORM"].r * 255, ChatTypeInfo["WHISPER_INFORM"].g * 255, ChatTypeInfo["WHISPER_INFORM"].b * 255 )
+			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER"].r * 255, ChatTypeInfo["WHISPER"].g * 255, ChatTypeInfo["WHISPER"].b * 255 )
 			info.disabled = nil
 			info.func = Notebook.Frame_DropdownSelect
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1211,11 +1179,7 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.text = NOTEBOOK_TEXT.SEND_TO_PARTY
 			info.value = NOTEBOOK_TEXT.SEND_TO_PARTY
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["PARTY"].r * 255, ChatTypeInfo["PARTY"].g * 255, ChatTypeInfo["PARTY"].b * 255 )
-			if IsInGroup() and not IsInRaid() then
-				info.disabled = nil
-			else
-				info.disabled = 1
-			end
+			info.disabled = (IsInRaid() or not IsInGroup()) and 1 or nil
 			info.func = Notebook.Frame_DropdownSelect
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 
@@ -1223,11 +1187,7 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.text = NOTEBOOK_TEXT.SEND_TO_RAID
 			info.value = NOTEBOOK_TEXT.SEND_TO_RAID
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["RAID"].r * 255, ChatTypeInfo["RAID"].g * 255, ChatTypeInfo["RAID"].b * 255 )
-			if IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) then
-				info.disabled = nil
-			else
-				info.disabled = 1
-			end
+			info.disabled = (not IsInRaid() or not UnitIsGroupLeader("player") or not UnitIsGroupAssistant("player")) and 1 or nil
 			info.func = Notebook.Frame_DropdownSelect
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 
@@ -1235,11 +1195,7 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.text = NOTEBOOK_TEXT.SEND_TO_GUILD
 			info.value = NOTEBOOK_TEXT.SEND_TO_GUILD
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["GUILD"].r * 255, ChatTypeInfo["GUILD"].g * 255, ChatTypeInfo["GUILD"].b * 255 )
-			if IsInGuild() then
-				info.disabled = nil
-			else
-				info.disabled = 1
-			end
+			info.disabled = (not IsInGuild()) and 1 or nil
 			info.func = Notebook.Frame_DropdownSelect
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 
@@ -1264,9 +1220,9 @@ function Notebook.Frame_DropdownInitialize(self)
 				end
 				local color = ChatTypeInfo["CHANNEL"..channelNum]
 				info = UIDropDownMenu_CreateInfo()
-				info.text = string.format(NOTEBOOK_TEXT.CHANNEL_NAME_FORMAT, displayNum, channelName)
-				info.value = string.format(NOTEBOOK_CHANNEL_VALUE_FORMAT, NOTEBOOK_TEXT.SEND_TO_CHANNEL, channelNum, channelName)
-				info.colorCode = string.format("|cff%02x%02x%02x", 255*color.r, 255*color.g, 255*color.b)
+				info.text = format(NOTEBOOK_TEXT.CHANNEL_NAME_FORMAT, displayNum, channelName)
+				info.value = format(NOTEBOOK_CHANNEL_VALUE_FORMAT, NOTEBOOK_TEXT.SEND_TO_CHANNEL, channelNum, channelName)
+				info.colorCode = format("|cff%02x%02x%02x", 255*color.r, 255*color.g, 255*color.b)
 				info.notCheckable = 1
 				info.func = Notebook.Frame_DropdownSelect
 				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1284,7 +1240,7 @@ function Notebook.Frame_SaveButtonOnClick(self, ndata)
 			ndata = Notebook.FindByID(NotebookFrame.selectedID)
 		end
 		if (ndata) then
-			Notebook.UpdateDescription(ndata, NotebookDescriptionEditBox:GetText())
+			Notebook.UpdateDescription(ndata, NotebookFrame.EditBox:GetText())
 			NotebookFrame.editing = nil
 			ndata.known = true
 			ndata.saved = nil
@@ -1378,35 +1334,35 @@ function Notebook.Frame_TabButtonOnClick(id)
 	end
 
 	if ((id == 1) and (_filterBy ~= NOTEBOOK_TEXT.ALL_TAB)) then
-		PanelTemplates_DeselectTab(NotebookFrameFilterTab2)
-		PanelTemplates_DeselectTab(NotebookFrameFilterTab3)
-		PanelTemplates_SelectTab(NotebookFrameFilterTab1)
+		PanelTemplates_DeselectTab(NotebookFrame.FilterTab2)
+		PanelTemplates_DeselectTab(NotebookFrame.FilterTab3)
+		PanelTemplates_SelectTab(NotebookFrame.FilterTab1)
 		filterMode = NOTEBOOK_TEXT.ALL_TAB
 		if (ndata) then
 			showText = true
 		end
 		scrollOffset = NotebookFrame.lastKnownOffset
-		NotebookFrame.lastRecentOffset = FauxScrollFrame_GetOffset(NotebookListFrameScrollFrame)
+		NotebookFrame.lastRecentOffset = FauxScrollFrame_GetOffset(NotebookFrame.ListScrollFrame)
 	elseif ((id == 2) and (_filterBy ~= NOTEBOOK_TEXT.MINE_TAB)) then
-		PanelTemplates_DeselectTab(NotebookFrameFilterTab1)
-		PanelTemplates_DeselectTab(NotebookFrameFilterTab3)
-		PanelTemplates_SelectTab(NotebookFrameFilterTab2)
+		PanelTemplates_DeselectTab(NotebookFrame.FilterTab1)
+		PanelTemplates_DeselectTab(NotebookFrame.FilterTab3)
+		PanelTemplates_SelectTab(NotebookFrame.FilterTab2)
 		filterMode = NOTEBOOK_TEXT.MINE_TAB
 		if (ndata and (ndata.author == _playerName)) then
 			showText = true
 		end
 		scrollOffset = NotebookFrame.lastRecentOffset
-		NotebookFrame.lastKnownOffset = FauxScrollFrame_GetOffset(NotebookListFrameScrollFrame)
+		NotebookFrame.lastKnownOffset = FauxScrollFrame_GetOffset(NotebookFrame.ListScrollFrame)
 	elseif ((id == 3) and (_filterBy ~= NOTEBOOK_TEXT.RECENT_TAB)) then
-		PanelTemplates_DeselectTab(NotebookFrameFilterTab1)
-		PanelTemplates_DeselectTab(NotebookFrameFilterTab2)
-		PanelTemplates_SelectTab(NotebookFrameFilterTab3)
+		PanelTemplates_DeselectTab(NotebookFrame.FilterTab1)
+		PanelTemplates_DeselectTab(NotebookFrame.FilterTab2)
+		PanelTemplates_SelectTab(NotebookFrame.FilterTab3)
 		filterMode = NOTEBOOK_TEXT.RECENT_TAB
 		if (ndata and ndata.recent) then
 			showText = true
 		end
 		scrollOffset = NotebookFrame.lastRecentOffset
-		NotebookFrame.lastKnownOffset = FauxScrollFrame_GetOffset(NotebookListFrameScrollFrame)
+		NotebookFrame.lastKnownOffset = FauxScrollFrame_GetOffset(NotebookFrame.ListScrollFrame)
 	end
 	if (_filterBy ~= filterMode) then
 		if (showText) then
@@ -1414,7 +1370,7 @@ function Notebook.Frame_TabButtonOnClick(id)
 				if (NotebookFrame.editing) then
 					local pdata = Notebook.FindByID(NotebookFrame.selectedID)
 					if (pdata) then
-						local text = NotebookDescriptionEditBox:GetText()
+						local text = NotebookFrame.EditBox:GetText()
 						if (text ~= pdata.description) then
 							pdata.saved = text
 						else
@@ -1437,7 +1393,7 @@ function Notebook.Frame_TabButtonOnClick(id)
 			if (NotebookFrame.editing) then
 				local pdata = Notebook.FindByID(NotebookFrame.selectedID)
 				if (pdata) then
-					local text = NotebookDescriptionEditBox:GetText()
+					local text = NotebookFrame.EditBox:GetText()
 					if (text ~= pdata.description) then
 						pdata.saved = text
 					else
@@ -1459,20 +1415,6 @@ function Notebook.Frame_TabButtonOnClick(id)
 	end
 end
 
-function Notebook.Frame_CanSendCheckOnClick(self)
-	-- Close any open drop-down menus
-	CloseDropDownMenus()
-
-	local ndata = Notebook.FindByID(NotebookFrame.selectedID)
-	if (ndata) then
-		if (ndata.send) then
-			ndata.send = nil
-		else
-			ndata.send = true
-		end
-	end
-end
-
 function Notebook.Frame_OnUpdate(self)
 	-- This function handles sending of messages (to limit send speed) and
 	-- cooldown and receive timing.
@@ -1483,7 +1425,7 @@ function Notebook.Frame_OnUpdate(self)
 			if (thisLine) then
 				-- Prefix each line with something to assist in identifying it
 				-- on the receiving end and to make empty lines get sent.
-				SendChatMessage(NOTEBOOK_SEND_PREFIX..thisLine, _sendChannel, _sendLanguage, _sendTarget)
+				SendChatMessage(NOTEBOOK_SEND_PREFIX..thisLine, _sendChannel, nil, _sendTarget)
 			end
 			table.remove(_sendLines, 1)
 			if (#_sendLines > 0) then
@@ -1634,19 +1576,19 @@ function Notebook.Frame_OnVerticalScroll(self, arg1)
 	-- positions for robustness.  Note that for some reason we cannot use
 	-- greater and less than comparisons in the script in the XML file itself,
 	-- which is why this is in its own function here.
-	local scrollbar = _G[self:GetName().."ScrollBar"]
+	local scrollbar = self.ScrollBar
 	scrollbar:SetValue(arg1)
 	local min, max = scrollbar:GetMinMaxValues()
 	local scroll = scrollbar:GetValue()
 	if (scroll < (min + 0.1)) then
-		_G[scrollbar:GetName().."ScrollUpButton"]:Disable()
+		scrollbar.ScrollUpButton:Disable()
 	else
-		_G[scrollbar:GetName().."ScrollUpButton"]:Enable()
+		scrollbar.ScrollUpButton:Enable()
 	end
 	if (scroll > (max - 0.1)) then
-		_G[scrollbar:GetName().."ScrollDownButton"]:Disable()
+		scrollbar.ScrollDownButton:Disable()
 	else
-		_G[scrollbar:GetName().."ScrollDownButton"]:Enable()
+		scrollbar.ScrollDownButton:Enable()
 	end
 end
 
@@ -1693,7 +1635,7 @@ function Notebook.HandlePopupAccept(type, data, text)
 						Notebook.FilterList()
 						Notebook.Frame_UpdateList()
 					else
-						ChatFrame1:AddMessage(string.format(NOTEBOOK_COMMANDS.ERROR_RENAME_NOT_UNIQUE_FORMAT, text))
+						ChatFrame1:AddMessage(format(NOTEBOOK_COMMANDS.ERROR_RENAME_NOT_UNIQUE_FORMAT, text))
 					end
 				end
 			else
@@ -1707,9 +1649,9 @@ function Notebook.HandlePopupAccept(type, data, text)
 					Notebook.Frame_UpdateButtons(nil, true)
 					Notebook.Frame_SetCanSendCheckbox(true, ndata.send)
 					Notebook.Frame_SetDescriptionText(ndata.description, ndata.known)
-					NotebookDescriptionEditBox:SetFocus()
+					NotebookFrame.EditBox:SetFocus()
 				else
-					ChatFrame1:AddMessage(string.format(NOTEBOOK_COMMANDS.ERROR_RENAME_NOT_UNIQUE_FORMAT, text))
+					ChatFrame1:AddMessage(format(NOTEBOOK_COMMANDS.ERROR_RENAME_NOT_UNIQUE_FORMAT, text))
 				end
 			end
 		else
@@ -1784,7 +1726,7 @@ function Notebook.ChatFrameEditBox_IsVisible(self)
 	-- give the original :IsVisible check priority over Notebook having focus.
 	if (_original_ChatFrameEditBox_IsVisible(self)) then
 		return true
-	elseif (IsShiftKeyDown() and NotebookDescriptionEditBox:IsVisible() and NotebookDescriptionEditBox.hasFocus) then
+	elseif (IsShiftKeyDown() and NotebookFrame.EditBox:IsVisible() and NotebookFrame.EditBox.hasFocus) then
 		return true
 	end
 	return false
@@ -1793,8 +1735,8 @@ end
 function Notebook.ChatFrameEditBox_Insert(self, text)
 	-- Hooked version of ChatFrameEditBox:Insert that allows us to get item
 	-- links into Notebook instead of always into the ChatFrameEditBox.
-	if (IsShiftKeyDown() and NotebookDescriptionEditBox:IsVisible() and NotebookDescriptionEditBox.hasFocus) then
-		NotebookDescriptionEditBox:Insert(text)
+	if (IsShiftKeyDown() and NotebookFrame.EditBox:IsVisible() and NotebookFrame.EditBox.hasFocus) then
+		NotebookFrame.EditBox:Insert(text)
 	else
 		_original_ChatFrameEditBox_Insert(self, text)
 	end
@@ -1819,6 +1761,7 @@ function Notebook.OnEvent(self, event, ...)
 		if (_serverName and _playerName) then
 			Notebook.PlayerLogin()
 		end
+		self:UnregisterEvent("ADDON_LOADED")
 
 	elseif (event == "PLAYER_LOGIN") then
 		_playerName = UnitName("player")
@@ -1843,7 +1786,7 @@ function Notebook.OnLoad(self)
 	NotebookFrame = self
 
 	-- Register for player events
-	NotebookFrame:RegisterEvent("VARIABLES_LOADED")
+	NotebookFrame:RegisterEvent("ADDON_LOADED")
 	NotebookFrame:RegisterEvent("PLAYER_LOGIN")
 	NotebookFrame:RegisterEvent("PLAYER_LOGOUT")
 
@@ -1971,7 +1914,7 @@ function Notebook.SlashCommand(text)
 			for index in ipairs(_filteredList) do
 				local ndata = _notesList[_filteredList[index]]
 				if (ndata) then
-					local text = string.format(NOTEBOOK_COMMANDS.COMMAND_LIST_FORMAT, ndata.title, string.len(ndata.description), ndata.author, Notebook.UnpackDate(ndata.date))
+					local text = format(NOTEBOOK_COMMANDS.COMMAND_LIST_FORMAT, ndata.title, string.len(ndata.description), ndata.author, Notebook.UnpackDate(ndata.date))
 					DEFAULT_CHAT_FRAME:AddMessage(text)
 				end
 			end
@@ -1996,12 +1939,12 @@ function Notebook.SlashCommand(text)
 				Notebook.Frame_TabButtonOnClick(1)
 				NotebookFrame:Show()
 			else
-				ChatFrame1:AddMessage(string.format(NOTEBOOK_COMMANDS.ERROR_RENAME_NOT_UNIQUE_FORMAT, _firstTimeNote.title))
+				ChatFrame1:AddMessage(format(NOTEBOOK_COMMANDS.ERROR_RENAME_NOT_UNIQUE_FORMAT, _firstTimeNote.title))
 			end
 
 		elseif (command == NOTEBOOK_COMMANDS.COMMAND_STATUS) then
 			UpdateAddOnMemoryUsage()
-			DEFAULT_CHAT_FRAME:AddMessage(string.format(NOTEBOOK_COMMANDS.COMMAND_STATUS_FORMAT, _notesCount, GetAddOnMemoryUsage(NOTEBOOK) + 0.5))
+			DEFAULT_CHAT_FRAME:AddMessage(format(NOTEBOOK_COMMANDS.COMMAND_STATUS_FORMAT, _notesCount, GetAddOnMemoryUsage(NOTEBOOK) + 0.5))
 
 		elseif (command == NOTEBOOK_COMMANDS.COMMAND_DEBUGON) then
 			_debugFrame = DEFAULT_CHAT_FRAME
