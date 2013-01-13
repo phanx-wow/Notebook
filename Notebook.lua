@@ -1,10 +1,11 @@
-------------------------------------------------------------------------
---	Notebook
---	Allows you to record and share notes in-game
---	Written by Cirk of Doomhammer, 2005-2009
---	Updated by Phanx with permission, 2012
---	http://www.wowinterface.com/downloads/info4544-Notebook.html
-------------------------------------------------------------------------
+--[[--------------------------------------------------------------------
+	Notebook
+	Allows you to record and share notes in-game
+	Written by Cirk of Doomhammer, 2005-2009
+	Updated by Phanx with permission, 2012-2013
+	http://www.wowinterface.com/downloads/info4544-Notebook
+	http://www.curse.com/addons/wow/notebook
+----------------------------------------------------------------------]]
 
 local NOTEBOOK, Notebook = ...
 NotebookState = { }

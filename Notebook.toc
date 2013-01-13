@@ -12,6 +12,7 @@
 
 ## SavedVariables: NotebookState
 
-Localization.lua
+Localization-en.lua
+
 Notebook.lua
 NotebookFrame.lua
