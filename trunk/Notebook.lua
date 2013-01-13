@@ -39,7 +39,7 @@ local NOTEBOOK_HEADER_POST = "\032  ##"
 local NOTEBOOK_HEADER_LINECOUNT_CHAR = "\032"
 local NOTEBOOK_HEADER_PATTERN = "^" .. NOTEBOOK_HEADER_PRE .. "(.+)" .. NOTEBOOK_HEADER_POST .. "(" .. NOTEBOOK_HEADER_LINECOUNT_CHAR .. "+)$"
 
-local NOTEBOOK_SEND_LINE_COOLDOWN = 1		-- 1000 ms per line (max message rate of 1 per sec average over 10)
+local NOTEBOOK_SEND_LINE_COOLDOWN = 0.25	-- 250 ms per line (max message rate of 1 per sec average over 10)
 local NOTEBOOK_SEND_FINISHED_COOLDOWN = 5	-- delay after sending last line
 local NOTEBOOK_RECEIVE_TIMEOUT = 3			-- how long to wait after it all should have been received
 
@@ -243,10 +243,13 @@ local _notebookConfirmServerPopup = {
 
 function Notebook.Register()
 	-- Register for events and hook functions
+	NotebookFrame:RegisterEvent("CHAT_MSG_INSTANCE_CHAT")
 	NotebookFrame:RegisterEvent("CHAT_MSG_RAID")
 	NotebookFrame:RegisterEvent("CHAT_MSG_RAID_LEADER")
 	NotebookFrame:RegisterEvent("CHAT_MSG_PARTY")
+	NotebookFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
 	NotebookFrame:RegisterEvent("CHAT_MSG_GUILD")
+	NotebookFrame:RegisterEvent("CHAT_MSG_OFFICER")
 	NotebookFrame:RegisterEvent("CHAT_MSG_WHISPER")
 	NotebookFrame:RegisterEvent("CHAT_MSG_CHANNEL")
 
@@ -1176,6 +1179,14 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.func = Notebook.Frame_DropdownSelect
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 
+			-- Send to instance
+			info.text = NOTEBOOK_TEXT.SEND_TO_INSTANCE
+			info.value = NOTEBOOK_TEXT.SEND_TO_INSTANCE
+			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["INSTANCE_CHAT"].r * 255, ChatTypeInfo["INSTANCE_CHAT"].g * 255, ChatTypeInfo["INSTANCE_CHAT"].b * 255 )
+			info.disabled = (GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE) == 0) and 1 or nil
+			info.func = Notebook.Frame_DropdownSelect
+			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+
 			-- Send to party
 			info.text = NOTEBOOK_TEXT.SEND_TO_PARTY
 			info.value = NOTEBOOK_TEXT.SEND_TO_PARTY
@@ -1196,6 +1207,14 @@ function Notebook.Frame_DropdownInitialize(self)
 			info.text = NOTEBOOK_TEXT.SEND_TO_GUILD
 			info.value = NOTEBOOK_TEXT.SEND_TO_GUILD
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["GUILD"].r * 255, ChatTypeInfo["GUILD"].g * 255, ChatTypeInfo["GUILD"].b * 255 )
+			info.disabled = (not IsInGuild()) and 1 or nil
+			info.func = Notebook.Frame_DropdownSelect
+			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+
+			-- Send to officer
+			info.text = NOTEBOOK_TEXT.SEND_TO_OFFICER
+			info.value = NOTEBOOK_TEXT.SEND_TO_OFFICER
+			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["OFFICER"].r * 255, ChatTypeInfo["OFFICER"].g * 255, ChatTypeInfo["OFFICER"].b * 255 )
 			info.disabled = (not IsInGuild()) and 1 or nil
 			info.func = Notebook.Frame_DropdownSelect
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1509,12 +1528,16 @@ function Notebook.Frame_DropdownSelect(self)
 			Notebook.FilterList()
 			Notebook.Frame_UpdateList()
 		end
+	elseif (self.value == NOTEBOOK_TEXT.SEND_TO_INSTANCE) then
+		Notebook.SendNote(ndata, "INSTANCE_CHAT", nil)
 	elseif (self.value == NOTEBOOK_TEXT.SEND_TO_RAID) then
 		Notebook.SendNote(ndata, "RAID", nil)
 	elseif (self.value == NOTEBOOK_TEXT.SEND_TO_PARTY) then
 		Notebook.SendNote(ndata, "PARTY", nil)
 	elseif (self.value == NOTEBOOK_TEXT.SEND_TO_GUILD) then
 		Notebook.SendNote(ndata, "GUILD", nil)
+	elseif (self.value == NOTEBOOK_TEXT.SEND_TO_OFFICER) then
+		Notebook.SendNote(ndata, "OFFICER", nil)
 	elseif (self.value == NOTEBOOK_TEXT.SEND_TO_PLAYER) then
 		local dialogFrame = StaticPopup_Show("NOTEBOOK_SEND_TO_PLAYER")
 		if (dialogFrame) then
@@ -1750,10 +1773,13 @@ end
 ------------------------------------------------------------------------
 
 function Notebook.OnEvent(self, event, ...)
-	if ((event == "CHAT_MSG_RAID") or
+	if ((event == "CHAT_MSG_INSTANCE_CHAT") or
+		(event == "CHAT_MSG_RAID") or
 		(event == "CHAT_MSG_RAID_LEADER") or
 		(event == "CHAT_MSG_PARTY") or
+		(event == "CHAT_MSG_PARTY_LEADER") or
 		(event == "CHAT_MSG_GUILD") or
+		(event == "CHAT_MSG_OFFICER") or
 		(event == "CHAT_MSG_WHISPER") or
 		(event == "CHAT_MSG_CHANNEL")) then
 		Notebook.ChatMessageHandler(event, ...)
@@ -1831,7 +1857,13 @@ function NotebookSendNote(title, channel, target)
 		local ndata = Notebook.FindByTitle(title, true)
 		if (ndata) then
 			if ((NotebookFrame.selectedID ~= ndata.id) or not NotebookFrame.editing) then
-				if (channel == "RAID") then
+				if (channel == "INSTANCE") then
+					if GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE) > 0 then
+						Notebook.SendMode(ndata, "INSTANCE_CHAT", nil)
+					elseif DEFAULT_CHAT_FRAME then
+						DEFAULT_CHAT_FRAME:AddMessage(NOTEBOOK_TEXT.ERROR.."You are not in an instance group")
+					end
+				elseif (channel == "RAID") then
 					if IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) then
 						Notebook.SendNote(ndata, "RAID", nil)
 					else
