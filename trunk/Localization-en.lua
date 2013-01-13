@@ -1,10 +1,11 @@
-------------------------------------------------------------------------
---	Notebook
---	Allows you to record and share notes in-game
---	Written by Cirk of Doomhammer, December 2005, last updated August 2009
---	Updated by Phanx
---	http://www.wowinterface.com/downloads/info4544-CirksNotebook.html
-------------------------------------------------------------------------
+--[[--------------------------------------------------------------------
+	Notebook
+	Allows you to record and share notes in-game
+	Written by Cirk of Doomhammer, 2005-2009
+	Updated by Phanx with permission, 2012-2013
+	http://www.wowinterface.com/downloads/info4544-Notebook
+	http://www.curse.com/addons/wow/notebook
+----------------------------------------------------------------------]]
 --	Localization
 
 BINDING_HEADER_NOTEBOOK_TITLE = "Notebook"
