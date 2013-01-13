@@ -57,9 +57,11 @@ NOTEBOOK_TEXT = {
 	SEND_OPTION = "Send To",
 	SEND_TO_TARGET = "Target",
 	SEND_TO_PLAYER = "Player",
-	SEND_TO_RAID = "Raid",
+	SEND_TO_INSTANCE = "Instance",
 	SEND_TO_PARTY = "Party",
+	SEND_TO_RAID = "Raid",
 	SEND_TO_GUILD = "Guild",
+	SEND_TO_OFFICER = "Officer",
 	SEND_TO_CHANNEL = "Channel",
 	CHANNEL_NAME_FORMAT = "%d. %s",
 
