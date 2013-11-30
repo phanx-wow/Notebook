@@ -16,14 +16,14 @@ BINDING_NAME_NOTEBOOK_PANEL = "Mostrar/ocultar Notebook"
 -- Miscellaneous text commands
 NOTEBOOK_TEXT = {
 	FRAME_TITLE_FORMAT = "Notebook de %s",
-	ALL_TAB = "Todos",
+	ALL_TAB = "Todo",
 	ALL_TAB_TOOLTIP = "Todas notas",
-	MINE_TAB = "Mis Notas",
-	MINE_TAB_TOOLTIP_FORMAT = "Notas de %s",
-	KNOWN_TAB = "Guardadas",
-	KNOWN_TAB_TOOLTIP = "Notas guardadas",
-	RECENT_TAB = "Recientes",
-	RECENT_TAB_TOOLTIP = "Notas recibidas recientemente",
+	MINE_TAB = UnitSex("player") == 3 and "Mía" or "Mío",
+	MINE_TAB_TOOLTIP_FORMAT = "Notas creadas por %s",
+	KNOWN_TAB = "Guardada",
+	KNOWN_TAB_TOOLTIP = "Notas que tú ha guardado",
+	RECENT_TAB = "Nuevo",
+	RECENT_TAB_TOOLTIP = "Notas que tú ha recibido recientemente",
 	SAVE_BUTTON = "Guardar",
 	SAVE_BUTTON_TOOLTIP = "Guardar los cambios actuales",
 	CANCEL_BUTTON = "Cancelar",
@@ -32,7 +32,7 @@ NOTEBOOK_TEXT = {
 	ADD_BUTTON_TOOLTIP = "Agregar esta nota a la lista guardada",
 	UPDATE_BUTTON = "Actualizar",
 	UPDATE_BUTTON_TOOLTIP = "Actualizar su nota guadada con este nuevo texto",
-	NEW_BUTTON = "Nueva",
+	NEW_BUTTON = "Crear",
 	NEW_BUTTON_TOOLTIP = "Crear una nueva nota",
 	CHECK_SEND_BUTTON = "Puede enviarse",
 	CHECK_CAN_SEND_TOOLTIP = "Esta nota puede enviarse",
@@ -136,7 +136,7 @@ NOTEBOOK_FIRST_TIME_NOTE = {
 	["date"] = "051224",
 	["description"] = [[Notebook te permite escribar y guardar notas sobre diversos temas, y compartirlas con tus amigos, tu grupo, tu hermandad, y los canales de chat! Si normalmente utiliza macros para dar instrucciones al grupo, explicar explicar las reglas de saqueo, recordar listas de encantamientos, o propósitos similares -- Notebook puede ser útil para ti!
 
-Para crearon una nueva nota, sólo clic en la boton "Nueva" y escriba un título para la nota. Títulos pueden tener hasta 60 caracteres de largo, y pueden incluyir cualqier carácter. Pero, cada título tiene que ser único -- no puedes tener dos notas con el mismo título.
+Para crearon una nueva nota, sólo clic en la boton "Crear" y escriba un título para la nota. Títulos pueden tener hasta 60 caracteres de largo, y pueden incluyir cualqier carácter. Pero, cada título tiene que ser único -- no puedes tener dos notas con el mismo título.
 
 Después de crear la nota, puedes editarlo y guardarlo en cualquier momento. Notas pueden tener hasta 4096 caracters de largo. Sí necesitas más espacio, simplemente crear otra nota! No hay un límite en el número de notas que puedes tener.
 
