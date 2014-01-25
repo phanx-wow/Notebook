@@ -9,11 +9,18 @@
 
 local NOTEBOOK, Notebook = ...
 
+local NOTEBOOK_EM = Notebook.NOTEBOOK_EM
+local NOTEBOOK_TEXT = Notebook.NOTEBOOK_TEXT
+local NOTEBOOK_COMMANDS = Notebook.NOTEBOOK_COMMANDS
+local NOTEBOOK_HELP = Notebook.NOTEBOOK_HELP
+local NOTEBOOK_FIRST_TIME_NOTE = Notebook.NOTEBOOK_FIRST_TIME_NOTE
+
 local NotebookFrame = CreateFrame("Frame", "NotebookFrame", UIParent)
 UIPanelWindows["NotebookFrame"] = { area = "left", pushable = 3, whileDead = 1, xoffset = -16, yoffset = 12 }
 tinsert(UISpecialFrames, "NotebookFrame")
 -- HideUIPanel(NotebookFrame)
 -- NotebookFrame:Hide()
+Notebook.Frame = NotebookFrame
 
 NotebookFrame:SetWidth(384)
 NotebookFrame:SetHeight(512)
@@ -25,8 +32,8 @@ NotebookFrame:SetMovable(true)
 NotebookFrame:SetScript("OnShow", function(self)
 	-- Set the frame title and "mine" tab tooltip with the player's name
 	local _playerName = UnitName("player")
-	NotebookFrame.TitleText:SetText(string.format(NOTEBOOK_TEXT.FRAME_TITLE_FORMAT, _playerName))
-	NotebookFrame.FilterTab2.tooltipText = string.format(NOTEBOOK_TEXT.MINE_TAB_TOOLTIP_FORMAT, _playerName)
+	NotebookFrame.TitleText:SetFormattedText(NOTEBOOK_TEXT.FRAME_TITLE_FORMAT, _playerName)
+	NotebookFrame.FilterTab2.tooltipText = format(NOTEBOOK_TEXT.MINE_TAB_TOOLTIP_FORMAT, _playerName)
 	Notebook.Frame_UpdateList()
 end)
 

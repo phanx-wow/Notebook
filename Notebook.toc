@@ -1,14 +1,18 @@
 ## Interface: 50400
-## Version: 5.4.1.wowi:revision
+## Version: 5.4.2.wowi:revision
 
 ## Title: Notebook
+## Title-ruRU: Блокнот
 ## Notes: Record and share notes in-game.
+## Notes-deDE: Schreibt und teilt Notizen im Spiel.
 ## Notes-esES: Escribir y guardar notas, y compartirlas en el juego.
 ## Notes-esMX: Escribir y guardar notas, y compartirlas en el juego.
+## Notes-ruRU: Позволяет создавать заметки и делится ими в игре.
 
 ## Author: Phanx, Cirk
+## X-Credits: Джоан-Подземье (ruRU localization)
 ## X-CompatibleLocales: deDE, enUS, esES, esMX, frFR, itIT, ptBR, koKR, ruRU, zhCN, zhTW
-## X-Localizations: enUS, esES, esMX
+## X-Localizations: enUS, deDE, esES, esMX, ruRU
 ## X-Website: http://www.wowinterface.com/downloads/info4544-Notebook.html
 ## X-Curse-Project-ID: notebook
 ## X-WoWI-ID: 4544
@@ -16,7 +20,9 @@
 ## SavedVariables: NotebookState
 
 Localization-en.lua
+Localization-de.lua
 Localization-es.lua
+Localization-ru.lua
 
 Notebook.lua
 NotebookFrame.lua

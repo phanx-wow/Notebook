@@ -7,18 +7,22 @@
 	http://www.curse.com/addons/wow/notebook
 ----------------------------------------------------------------------]]
 --	Localization
+local NOTEBOOK, Notebook = ...
+Notebook.name = GetAddOnMetadata(NOTEBOOK, "Title")
+Notebook.description = GetAddOnMetadata(NOTEBOOK, "Notes")
 
-BINDING_HEADER_NOTEBOOK_TITLE = "Notebook"
+BINDING_HEADER_NOTEBOOK_TITLE = Notebook.name
 BINDING_NAME_NOTEBOOK_PANEL = "Toggle Notebook"
 
-NOTEBOOK_EM = {
+local NOTEBOOK_EM = {
 	ON = "|cffffff00",
 	RED = "|cffff4000",
 	OFF = "|r",
 }
 
+------------------------------------------------------------------------
 -- Miscellaneous text commands
-NOTEBOOK_TEXT = {
+local NOTEBOOK_TEXT = {
 	FRAME_TITLE_FORMAT = "%s's Notebook",
 	ALL_TAB = "All",
 	ALL_TAB_TOOLTIP = "All notes",
@@ -70,29 +74,30 @@ NOTEBOOK_TEXT = {
 	ENTER_NEW_TITLE_TEXT = "Enter new title for note:",
 	CONFIRM_REMOVE_FORMAT = "Really delete \"%s\"?",
 	CONFIRM_UPDATE_FORMAT = "Really replace \"%s\" with the one from %s?",
-	CONFIRM_SERVER_CHANNEL_FORMAT = "Really send \"%s\" to %s channel?",
+	CONFIRM_SERVER_CHANNEL_FORMAT = "Really send \"%s\" to the %s channel?",
 
-	NOTE_RECEIVED_FORMAT = NOTEBOOK_EM.ON.."Notebook added note \""..NOTEBOOK_EM.OFF.."%s"..NOTEBOOK_EM.ON.."\" from "..NOTEBOOK_EM.OFF.."%s",
+	NOTE_RECEIVED_FORMAT = NOTEBOOK_EM.ON .. "Notebook added note \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" from " .. NOTEBOOK_EM.OFF .. "%s",
 
 	ELLIPSIS = "...",
-	MONTHNAME_1 = FULLDATE_MONTH_JANUARY, -- "Jan",
-	MONTHNAME_2 = FULLDATE_MONTH_FEBRUARY, -- "Feb",
-	MONTHNAME_3 = FULLDATE_MONTH_MARCH, -- "Mar",
-	MONTHNAME_4 = FULLDATE_MONTH_APRIL, -- "Apr",
-	MONTHNAME_5 = FULLDATE_MONTH_MAY, -- "May",
-	MONTHNAME_6 = FULLDATE_MONTH_JUNE, -- "Jun",
-	MONTHNAME_7 = FULLDATE_MONTH_JULY, -- "Jul",
-	MONTHNAME_8 = FULLDATE_MONTH_AUGUST, -- "Aug",
-	MONTHNAME_9 = FULLDATE_MONTH_SEPTEMBER, -- "Sep",
-	MONTHNAME_10 = FULLDATE_MONTH_OCTOBER, -- "Oct",
-	MONTHNAME_11 = FULLDATE_MONTH_NOVEMBER, -- "Nov",
-	MONTHNAME_12 = FULLDATE_MONTH_DECEMBER, -- "Dec",
-	DEBUG = NOTEBOOK_EM.ON.."Notebook: "..NOTEBOOK_EM.OFF,
-	ERROR = NOTEBOOK_EM.RED.."Notebook: "..NOTEBOOK_EM.OFF,
+	MONTHNAME_1 = FULLDATE_MONTH_JANUARY,
+	MONTHNAME_2 = FULLDATE_MONTH_FEBRUARY,
+	MONTHNAME_3 = FULLDATE_MONTH_MARCH,
+	MONTHNAME_4 = FULLDATE_MONTH_APRIL,
+	MONTHNAME_5 = FULLDATE_MONTH_MAY,
+	MONTHNAME_6 = FULLDATE_MONTH_JUNE,
+	MONTHNAME_7 = FULLDATE_MONTH_JULY,
+	MONTHNAME_8 = FULLDATE_MONTH_AUGUST,
+	MONTHNAME_9 = FULLDATE_MONTH_SEPTEMBER,
+	MONTHNAME_10 = FULLDATE_MONTH_OCTOBER,
+	MONTHNAME_11 = FULLDATE_MONTH_NOVEMBER,
+	MONTHNAME_12 = FULLDATE_MONTH_DECEMBER,
+	DEBUG = NOTEBOOK_EM.ON .. Notebook.name .. ": " .. NOTEBOOK_EM.OFF,
+	ERROR = NOTEBOOK_EM.RED .. Notebook.name .. ": " .. NOTEBOOK_EM.OFF,
 }
 
+------------------------------------------------------------------------
 -- Slash commands and responses
-NOTEBOOK_COMMANDS = {
+local NOTEBOOK_COMMANDS = {
 	-- Slash commands
 	COMMAND_HELP = "help",
 	COMMAND_LIST = "list",
@@ -107,34 +112,32 @@ NOTEBOOK_COMMANDS = {
 	-- Slash command responses
 	COMMAND_DEBUGON_CONFIRM = "Notebook debug is enabled",
 	COMMAND_DEBUGOFF_CONFIRM = "Notebook debug is disabled",
-	COMMAND_LIST_CONFIRM = NOTEBOOK_EM.ON.."Notebook contains the following notes:"..NOTEBOOK_EM.OFF,
-	COMMAND_LIST_FORMAT = NOTEBOOK_EM.ON.."- "..NOTEBOOK_EM.OFF.."%s "..NOTEBOOK_EM.ON.."(%d characters, by %s, %s)"..NOTEBOOK_EM.OFF,
-	COMMAND_STATUS_FORMAT = NOTEBOOK_EM.ON.."Notebook currently contains %d notes and is using %.0fkB of memory"..NOTEBOOK_EM.OFF,
+	COMMAND_LIST_CONFIRM = NOTEBOOK_EM.ON .. "Notebook contains the following notes:" .. NOTEBOOK_EM.OFF,
+	COMMAND_LIST_FORMAT = NOTEBOOK_EM.ON .. "- " .. NOTEBOOK_EM.OFF .. "%s " .. NOTEBOOK_EM.ON .. "(%d characters, by %s, %s)" .. NOTEBOOK_EM.OFF,
+	COMMAND_STATUS_FORMAT = NOTEBOOK_EM.ON .. "Notebook currently contains %d notes and is using %.0fkB of memory" .. NOTEBOOK_EM.OFF,
 
 	-- Error messages
-	ERROR_RENAME_NOT_UNIQUE_FORMAT = NOTEBOOK_TEXT.ERROR..NOTEBOOK_EM.ON.."You already have a note titled \""..NOTEBOOK_EM.OFF.."%s"..NOTEBOOK_EM.ON.."\" (titles must be unique)"..NOTEBOOK_EM.OFF,
-	ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR..NOTEBOOK_EM.ON.."You cannot have an empty title"..NOTEBOOK_EM.OFF,
+	ERROR_RENAME_NOT_UNIQUE_FORMAT = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "You already have a note titled \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" (titles must be unique)" .. NOTEBOOK_EM.OFF,
+	ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "You cannot have an empty title" .. NOTEBOOK_EM.OFF,
 }
 
+------------------------------------------------------------------------
 -- Help text
-NOTEBOOK_DESCRIPTION = "Allows you to record and share notes in-game."
-NOTEBOOK_HELP = {
-	NOTEBOOK_EM.ON.."/notebook "..NOTEBOOK_COMMANDS.COMMAND_HELP..NOTEBOOK_EM.OFF.." shows this help message",
-	NOTEBOOK_EM.ON.."/notebook "..NOTEBOOK_EM.OFF.."toggles showing the Notebook window",
-	NOTEBOOK_EM.ON.."/notebook "..NOTEBOOK_COMMANDS.COMMAND_SHOW..NOTEBOOK_EM.OFF.." shows Notebook",
-	NOTEBOOK_EM.ON.."/notebook "..NOTEBOOK_COMMANDS.COMMAND_HIDE..NOTEBOOK_EM.OFF.." hides Notebook",
-	NOTEBOOK_EM.ON.."/notebook "..NOTEBOOK_COMMANDS.COMMAND_LIST..NOTEBOOK_EM.OFF.." lists the notes in your Notebook",
-	NOTEBOOK_EM.ON.."/notebook "..NOTEBOOK_COMMANDS.COMMAND_WELCOME..NOTEBOOK_EM.OFF.." restores the Welcome note",
-	NOTEBOOK_EM.ON.."/notebook "..NOTEBOOK_COMMANDS.COMMAND_STATUS..NOTEBOOK_EM.OFF.." shows the status of Notebook",
-	"",
-	"You can also use "..NOTEBOOK_EM.ON.."/note"..NOTEBOOK_EM.OFF.." instead of "..NOTEBOOK_EM.ON.."/notebook"..NOTEBOOK_EM.OFF.." and there is a key-binding available to open and close the Notebook window.",
+local NOTEBOOK_HELP = {
+	"Use /notebook or /note with the following commands:",
+	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_SHOW .. NOTEBOOK_EM.OFF .. " shows Notebook",
+	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_HIDE .. NOTEBOOK_EM.OFF .. " hides Notebook",
+	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_STATUS .. NOTEBOOK_EM.OFF .. " reports the status of Notebook",
+	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_LIST .. NOTEBOOK_EM.OFF .. " lists the notes in your Notebook",
+	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. NOTEBOOK_EM.OFF .. " restores the Welcome note",
+	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_HELP .. NOTEBOOK_EM.OFF .. " shows this help message",
+	"Use the slash command without any additional commands, or bind a key in the Key Bindings menu, to toggle the Notebook window.",
 }
 
 ------------------------------------------------------------------------
 --	First timer's brief manual
-------------------------------------------------------------------------
 
-NOTEBOOK_FIRST_TIME_NOTE = {
+local NOTEBOOK_FIRST_TIME_NOTE = {
 	["title"] = "Welcome to Notebook!",
 	["author"] = "Cirk",
 	["date"] = "051224",
@@ -154,3 +157,12 @@ I hope you enjoy Notebook and find it useful!
 
 -- Cirk of Doomhammer]],
 }
+
+------------------------------------------------------------------------
+-- Export
+
+Notebook.NOTEBOOK_EM = NOTEBOOK_EM
+Notebook.NOTEBOOK_TEXT = NOTEBOOK_TEXT
+Notebook.NOTEBOOK_COMMANDS = NOTEBOOK_COMMANDS
+Notebook.NOTEBOOK_HELP = NOTEBOOK_HELP
+Notebook.NOTEBOOK_FIRST_TIME_NOTE = NOTEBOOK_FIRST_TIME_NOTE
