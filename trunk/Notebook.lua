@@ -8,13 +8,14 @@
 ----------------------------------------------------------------------]]
 
 local NOTEBOOK, Notebook = ...
-NotebookState = { }
+Notebook.version = GetAddOnMetadata( NOTEBOOK, "Version" )
+NotebookState = {}
 
-------------------------------------------------------------------------
---	AddOn name and version
-
-local NOTEBOOK_NAME = GetAddOnMetadata( NOTEBOOK, "Title" )
-local NOTEBOOK_VERSION = GetAddOnMetadata( NOTEBOOK, "Version" )
+local NOTEBOOK_EM = Notebook.NOTEBOOK_EM
+local NOTEBOOK_TEXT = Notebook.NOTEBOOK_TEXT
+local NOTEBOOK_COMMANDS = Notebook.NOTEBOOK_COMMANDS
+local NOTEBOOK_HELP = Notebook.NOTEBOOK_HELP
+local NOTEBOOK_FIRST_TIME_NOTE = Notebook.NOTEBOOK_FIRST_TIME_NOTE
 
 ------------------------------------------------------------------------
 --	Global constants
@@ -82,19 +83,19 @@ local _notesList
 
 local _notesCount = 0			-- count of how many notes are in notesList
 local _notesLastID = 0			-- last note ID used
-local _filteredList = { }		-- filtered list of notes, contains indices into notesList
+local _filteredList = {}		-- filtered list of notes, contains indices into notesList
 local _filteredCount = 0
 local _filterBy = NOTEBOOK_TEXT.ALL_TAB
 
 local _sendInProgress			-- set when sending a message to someone (nil otherwise)
 local _sendCooldownTimer		-- set to time to send next line or to allow next send (nil if not used)
-local _sendLines = { }			-- the pending lines to be sent
+local _sendLines = {}			-- the pending lines to be sent
 local _sendChannel				-- channel to use ("GUILD", "PARTY", "CHANNEL", etc.)
 local _sendTarget				-- target for send
 local _lastPlayer				-- last player we sent a note to
 local _currentTitle				-- current title to be edited (if there is one)
 
-local _firstTimeLoad			-- set to true if this Addon has not been run on the current server yet
+local _firstTimeLoad			-- set to true if this Notebook has not been run on the current server yet
 
 local _receiveInProgress		-- true when receiving a message
 local _receiveTimer				-- set to an expiration time when receiving
@@ -102,7 +103,7 @@ local _receiveSender			-- set to the name of the player we are listening to
 local _receiveChannel			-- set to the channel we are listening to
 local _receiveTarget			-- set to the channel # we are listening to (for chat channels)
 local _receiveLinesExpected = 0		-- number of lines expected
-local _receiveLines = { }		-- lines so far received
+local _receiveLines = {}		-- lines so far received
 local _receiveTitle				-- title of new note
 
 ------------------------------------------------------------------------
@@ -285,8 +286,8 @@ end
 
 function Notebook.Reset()
 	-- Resets the Notebook back to empty
-	_notesList = { }
-	_filteredList = { }
+	_notesList = {}
+	_filteredList = {}
 	_notesCount = 0
 	_filteredCount = 0
 	_notesLastID = 0
@@ -294,10 +295,10 @@ end
 
 function Notebook.SaveData()
 	-- Saves the currently known entries in the Notebook (not-known are not saved)
-	local notes = { }
+	local notes = {}
 	for index, ndata in ipairs(_notesList) do
 		if (ndata.known) then
-			local saveNote = { }
+			local saveNote = {}
 			saveNote.author = ndata.author
 			saveNote.date = ndata.date
 			saveNote.sent = ndata.sent
@@ -305,7 +306,7 @@ function Notebook.SaveData()
 				saveNote.description = ndata.description
 			else
 				local data = ndata.description
-				local result = { }
+				local result = {}
 				while (string.len(data or "") > 0) do
 					local prefix = string.sub(data, 1, NOTEBOOK_MAX_STRING_LENGTH)
 					data = string.sub(data, NOTEBOOK_MAX_STRING_LENGTH + 1)
@@ -327,7 +328,7 @@ function Notebook.LoadOneNote(title, ndata)
 	-- Given a saved note defined by a title and by ndata, this function
 	-- creates a note structure for use in-memory.  The _notesLastID value is
 	-- also automatically incremented to form the note's id value
-	local newNote = { }
+	local newNote = {}
 	newNote.title = title
 	newNote.author = ndata.author
 	newNote.date = ndata.date
@@ -428,7 +429,7 @@ function Notebook.Add(title, author, date, description, known, recent, send)
 	-- Adds a new entry to the notebook.  Note that it is the callers
 	-- responsibility to make sure the title is valid and unique!  The
 	-- function then returns the newly added note entry.
-	local newNote = { }
+	local newNote = {}
 	newNote.title = title
 	newNote.author = author
 	newNote.date = date
@@ -449,7 +450,7 @@ function Notebook.RemoveByID(id)
 	-- at least reliably), at least when the index being removed is not the
 	-- first or last index, so we do it the somewhat slower way of recreating
 	-- the table entries without the one we don't want.
-	local newList = { }
+	local newList = {}
 	for index = 1, _notesCount do
 		local ndata = _notesList[index]
 		if (ndata.id ~= id) then
@@ -509,7 +510,7 @@ function Notebook.CompareOnTitle(index1, index2)
 end
 
 function Notebook.FilterList()
-	_filteredList = { }
+	_filteredList = {}
 	_filteredCount = 0
 	if (_filterBy == NOTEBOOK_TEXT.KNOWN_TAB) then
 		for index, ndata in ipairs(_notesList) do
@@ -550,7 +551,7 @@ function Notebook.UpdateNotKnown(removeTitle)
 	-- removeTitle parameter is set, then any not known entries with matching
 	-- titles will be automatically removed (irrespective of their
 	-- description)
-	local removeList = { }
+	local removeList = {}
 	for index, ndata in ipairs(_notesList) do
 		if (not ndata.known) then
 			if (ndata.title == removeTitle) then
@@ -584,7 +585,7 @@ function Notebook.ConvertToLines(text, maxLines, debug)
 	-- word-wrapping), reduces multiple empty lines to single empty lines,
 	-- and enforces a maximum of maxLines in the resulting table, which is
 	-- then returned.
-	local lines = { }
+	local lines = {}
 	local lastLine = nil
 	local numLines = 0
 	while (text and (text ~= "")) do
@@ -721,7 +722,7 @@ function Notebook.ChatMessageHandler(event, arg1, arg2, arg3, arg4, arg5, arg6, 
 				_receiveChannel = channel
 				_receiveTarget = arg8
 				_receiveLinesExpected = lineCount
-				_receiveLines = { }
+				_receiveLines = {}
 				_receiveTitle = title
 				NotebookFrame:SetScript("OnUpdate", Notebook.Frame_OnUpdate)
 			end
@@ -789,10 +790,10 @@ end
 
 function Notebook.VariablesLoaded()
 	if (not NotebookState) then
-		NotebookState = { }
+		NotebookState = {}
 	end
 	if (not NotebookState.Notes) then
-		NotebookState.Notes = { }
+		NotebookState.Notes = {}
 		_firstTimeLoad = true
 	end
 	_notesList = NotebookState.Notes
@@ -1558,7 +1559,7 @@ function Notebook.Frame_DropdownSelect(self)
 			if (isServerChannel) then
 				local dialogFrame = StaticPopup_Show("NOTEBOOK_SERVER_CONFIRM", ndata.title, channelName)
 				if (dialogFrame) then
-					dialogFrame.data = { }
+					dialogFrame.data = {}
 					dialogFrame.data.id = ndata.id
 					dialogFrame.data.channelNum = channelNum
 				end
@@ -1823,9 +1824,8 @@ function Notebook.OnLoad(self)
 	-- Register slash command handler
 	SLASH_NOTEBOOK1 = "/notebook"
 	SLASH_NOTEBOOK2 = "/note"
-	SlashCmdList["NOTEBOOK"] = function(text)
-		Notebook.SlashCommand(text)
-	end
+	SLASH_NOTEBOOK3 = Notebook.NOTEBOOK_SLASH -- optional localized version
+	SlashCmdList["NOTEBOOK"] = Notebook.SlashCommand
 
 	-- Add our static popup dialogs for the actions we need
 	StaticPopupDialogs["NOTEBOOK_SEND_TO_PLAYER"] = _notebookPlayerNamePopup
@@ -1835,7 +1835,7 @@ function Notebook.OnLoad(self)
 	StaticPopupDialogs["NOTEBOOK_SERVER_CONFIRM"] = _notebookConfirmServerPopup
 
 	-- Register with Blizzard interface options
-	Notebook.RegisterOptions(NOTEBOOK_NAME, NOTEBOOK_NAME.." v"..NOTEBOOK_VERSION, NOTEBOOK_DESCRIPTION, NOTEBOOK_HELP)
+	Notebook.RegisterOptions(Notebook.name, Notebook.name.." v"..Notebook.version, NOTEBOOK_DESCRIPTION, NOTEBOOK_HELP)
 end
 
 ------------------------------------------------------------------------
@@ -1998,7 +1998,7 @@ function Notebook.SlashCommand(text)
 			ToggleFrame(NotebookFrame)
 
 		else
-			DEFAULT_CHAT_FRAME:AddMessage(NOTEBOOK_EM.ON..NOTEBOOK_NAME.." v"..NOTEBOOK_VERSION..NOTEBOOK_EM.OFF)
+			DEFAULT_CHAT_FRAME:AddMessage(NOTEBOOK_EM.ON..Notebook.name.." v"..Notebook.version..NOTEBOOK_EM.OFF)
 			DEFAULT_CHAT_FRAME:AddMessage(NOTEBOOK_DESCRIPTION)
 			for _, text in pairs(NOTEBOOK_HELP) do
 				DEFAULT_CHAT_FRAME:AddMessage(text)
