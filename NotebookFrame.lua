@@ -2,7 +2,7 @@
 	Notebook
 	Allows you to record and share notes in-game
 	Written by Cirk of Doomhammer, 2005-2009
-	Updated by Phanx with permission, 2012-2013
+	Updated by Phanx with permission, 2012-2014
 	http://www.wowinterface.com/downloads/info4544-Notebook
 	http://www.curse.com/addons/wow/notebook
 ----------------------------------------------------------------------]]
@@ -166,26 +166,26 @@ closeX:SetPoint("TOPRIGHT", -30, -8)
 NotebookFrame.CloseButtonX = closeX
 
 ------------------------------------------------------------------------
---  CLOSE BUTTON
+--[[  CLOSE BUTTON
 
 local close = CreateFrame("Button", nil, NotebookFrame, "UIPanelButtonTemplate")
 close:SetPoint("BOTTOMRIGHT", -42, 80)
-close:SetWidth(80)
-close:SetHeight(22)
+close:SetSize(80, 22)
 close:SetNormalFontObject(GameFontNormalSmall)
 close:SetHighlightFontObject(GameFontHighlightSmall)
 close:SetDisabledFontObject(GameFontDisableSmall)
 close:SetScript("OnClick", HideParentPanel)
 close:SetText(CLOSE)
 NotebookFrame.CloseButton = close
-
+]]
 ------------------------------------------------------------------------
 --  SAVE BUTTON
 
-local save = CreateFrame("Button", nil, NotebookFrame, "UIPanelButtonTemplate")
-save:SetPoint("BOTTOMLEFT", 20, 80)
-save:SetWidth(60)
-save:SetHeight(22)
+local save = CreateFrame("Button", "$parentSave", NotebookFrame, "UIPanelButtonTemplate")
+--save:SetPoint("BOTTOMLEFT", 20, 80)
+--save:SetSize(60, 22)
+save:SetPoint("BOTTOMRIGHT", -42, 80)
+save:SetSize(86, 22)
 save:SetNormalFontObject(GameFontNormalSmall)
 save:SetHighlightFontObject(GameFontHighlightSmall)
 save:SetDisabledFontObject(GameFontDisableSmall)
@@ -198,10 +198,10 @@ NotebookFrame.SaveButton = save
 ------------------------------------------------------------------------
 --  CANCEL BUTTON
 
-local cancel = CreateFrame("Button", nil, NotebookFrame, "UIPanelButtonTemplate")
-cancel:SetPoint("BOTTOMLEFT", save, "BOTTOMRIGHT")
-cancel:SetWidth(60)
-cancel:SetHeight(22)
+local cancel = CreateFrame("Button", "$parentCancel", NotebookFrame, "UIPanelButtonTemplate")
+--cancel:SetPoint("BOTTOMLEFT", save, "BOTTOMRIGHT")
+cancel:SetPoint("BOTTOMRIGHT", save, "BOTTOMLEFT", -2, 0)
+cancel:SetSize(86, 22)
 cancel:SetNormalFontObject(GameFontNormalSmall)
 cancel:SetHighlightFontObject(GameFontHighlightSmall)
 cancel:SetDisabledFontObject(GameFontDisableSmall)
@@ -214,10 +214,10 @@ NotebookFrame.CancelButton = cancel
 ------------------------------------------------------------------------
 --  NEW BUTTON
 
-local new = CreateFrame("Button", nil, NotebookFrame, "UIPanelButtonTemplate")
+local new = CreateFrame("Button", "$parentNew", NotebookFrame, "UIPanelButtonTemplate")
 NotebookFrame.NewButton = new
 
-new:SetPoint("TOPRIGHT", -46, -49)
+new:SetPoint("TOPRIGHT", -40, -49)
 new:SetWidth(60)
 new:SetHeight(22)
 new:SetNormalFontObject(GameFontNormalSmall)
@@ -229,28 +229,20 @@ new.tooltipText = NOTEBOOK_TEXT.NEW_BUTTON_TOOLTIP
 new.newbieText = NOTEBOOK_TEXT.NEW_BUTTON_TOOLTIP
 
 ------------------------------------------------------------------------
--- CAN SEND OPTION BUTTON
+-- CAN SEND CHECKBOX
 
-local canSend = CreateFrame("CheckButton", nil, NotebookFrame)
+local canSend = CreateFrame("CheckButton", "$parentCanSend", NotebookFrame, "InterfaceOptionsSmallCheckButtonTemplate")
 NotebookFrame.CanSendCheckButton = canSend
 
--- Can't inherit from UICheckButtonTemplate because it requires a global name.
-canSend:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up")
-canSend:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down")
-canSend:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight")
-canSend:GetHighlightTexture():SetBlendMode("ADD")
-canSend:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check")
-canSend:SetDisabledCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check-Disabled")
-
-canSend.Text = canSend:CreateFontString(nil, "ARTWORK")
-canSend.Text:SetPoint("LEFT", canSend, "RIGHT", -2, 0)
+canSend.Text = _G[canSend:GetName().."Text"]
+canSend.Text:SetPoint("LEFT", canSend, "RIGHT", 0, 0) -- remove default 1px y-offset
 canSend:SetFontString(canSend.Text)
-canSend:SetNormalFontObject(GameFontNormalSmall)
-canSend:SetHighlightFontObject(GameFontHighlightSmall)
+canSend:SetNormalFontObject(GameFontHighlightSmall)
+canSend:SetHighlightFontObject(GameFontNormalSmall)
 canSend:SetDisabledFontObject(GameFontDisableSmall)
 
-canSend:SetPoint("LEFT", cancel, "RIGHT")
-canSend:SetSize(18, 18)
+canSend:SetPoint("BOTTOMLEFT", 20, 81)
+canSend:SetSize(22, 22) -- default is 26
 canSend:SetHitRectInsets(0, -70, 0, 0)
 
 canSend:SetText(NOTEBOOK_TEXT.CHECK_SEND_BUTTON)
@@ -422,7 +414,7 @@ end
 NotebookFrame.ListButtons = listButtons
 
 ------------------------------------------------------------------------
---  LIST SCROLL BAR -- TODO: Does this need a global name?
+--  LIST SCROLL BAR
 
 local scrollFrame = CreateFrame("ScrollFrame", "NotebookFrameListScrollFrame", listFrame, "UIPanelScrollFrameTemplate")
 scrollFrame:SetPoint("TOPLEFT", 0, -2)
