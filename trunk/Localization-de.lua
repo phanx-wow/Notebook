@@ -2,13 +2,14 @@
 	Notebook
 	Allows you to record and share notes in-game
 	Written by Cirk of Doomhammer, 2005-2009
-	Updated by Phanx with permission, 2012-2013
+	Updated by Phanx with permission, 2012-2014
 	http://www.wowinterface.com/downloads/info4544-Notebook
 	http://www.curse.com/addons/wow/notebook
 ----------------------------------------------------------------------]]
 --	Deutsch Übersetzung von Phanx
 if GetLocale() ~= "deDE" then return end
 local NOTEBOOK, Notebook = ...
+local E = Notebook.NOTEBOOK_EM
 
 BINDING_NAME_NOTEBOOK_PANEL = "Notebook ein/aus"
 
@@ -18,20 +19,20 @@ local T = Notebook.NOTEBOOK_TEXT
 
 T.FRAME_TITLE_FORMAT = "Notebook von %s"
 T.ALL_TAB = "Alle"
-T.ALL_TAB_TOOLTIP = "Alle Noten"
+T.ALL_TAB_TOOLTIP = "Alle Notizen"
 T.MINE_TAB = "Meine"
 T.MINE_TAB_TOOLTIP_FORMAT = "Die Notizen, die %s sich selbst geschaffen"
-T.KNOWN_TAB = "Bekannt"
+T.KNOWN_TAB = "Bekannte"
 T.KNOWN_TAB_TOOLTIP = "Die Noitzen, die Ihr habt gespeichert"
-T.RECENT_TAB = "Kürzlich"
+T.RECENT_TAB = "Kürzliche"
 T.RECENT_TAB_TOOLTIP = "Die Notizen, die Ihr habt kürzlich erhalten"
-T.SAVE_BUTTON = "Spiecht"
+T.SAVE_BUTTON = "Spiechen"
 T.SAVE_BUTTON_TOOLTIP = "Die aktuellen Änderungen spiechen"
-T.CANCEL_BUTTON = "Abbrecht"
+T.CANCEL_BUTTON = "Abbrechen"
 T.CANCEL_BUTTON_TOOLTIP = "Nicht gespeichterte Änderungen verwerfen, und zum zuvor gespiecherte Version zurückkehren"
-T.ADD_BUTTON = "Fügt hinzu"
+T.ADD_BUTTON = "Hinzufügen"
 T.ADD_BUTTON_TOOLTIP = "Diese Notiz auf Euer Liste der zuvor gespiecherten Notizen hinzufügen"
-T.UPDATE_BUTTON = "Aktualisiert"
+T.UPDATE_BUTTON = "Aktualisieren"
 T.UPDATE_BUTTON_TOOLTIP = "Eure zuvor gespiecherten Notiz mit diesem neuen Text aktualisieren"
 T.NEW_BUTTON = "Neue"
 T.NEW_BUTTON_TOOLTIP = "Eine neue Notiz schaffen"
@@ -69,7 +70,7 @@ T.CONFIRM_REMOVE_FORMAT = "Wollt Ihr wirklich die Notiz \"%s\" dauerhaft lösche
 T.CONFIRM_UPDATE_FORMAT = "Wollt Ihr wirklich die Notiz \"%s\" durch der Version von %s ersetzen?"
 T.CONFIRM_SERVER_CHANNEL_FORMAT = "Wollt Ihr wirklich die Notiz \"%s\" zu dem Channel %s senden?"
 
-T.NOTE_RECEIVED_FORMAT = NOTEBOOK_EM.ON .. "Notebook hat die Notiz \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" von " .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "hinzugefügt." .. NOTEBOOK_EM.OFF
+T.NOTE_RECEIVED_FORMAT = E.ON .. "Notebook hat die Notiz \"" .. E.OFF .. "%s" .. E.ON .. "\" von " .. E.OFF .. "%s" .. E.ON .. "hinzugefügt." .. E.OFF
 
 ------------------------------------------------------------------------
 -- Slash commands and responses
@@ -89,13 +90,13 @@ C.COMMAND_STATUS = "status"
 -- Slash command responses
 C.COMMAND_DEBUGON_CONFIRM = "Notebook-Debugging wird aktiviert."
 C.COMMAND_DEBUGOFF_CONFIRM = "Notebook-Debugging wird deaktiviert."
-C.COMMAND_LIST_CONFIRM = NOTEBOOK_EM.ON .. "Notebook enthält die folgenden Notizen:" .. NOTEBOOK_EM.OFF
-C.COMMAND_LIST_FORMAT = NOTEBOOK_EM.ON .. "- " .. NOTEBOOK_EM.OFF .. "%s " .. NOTEBOOK_EM.ON .. "(%d Zeichen, von %s, %s)" .. NOTEBOOK_EM.OFF
-C.COMMAND_STATUS_FORMAT = NOTEBOOK_EM.ON .. "Notebook enthält %d Noitzen, und benutzt %.0fkB Spiecher." .. NOTEBOOK_EM.OFF
+C.COMMAND_LIST_CONFIRM = E.ON .. "Notebook enthält die folgenden Notizen:" .. E.OFF
+C.COMMAND_LIST_FORMAT = E.ON .. "- " .. E.OFF .. "%s " .. E.ON .. "(%d Zeichen, von %s, %s)" .. E.OFF
+C.COMMAND_STATUS_FORMAT = E.ON .. "Notebook enthält %d Noitzen, und benutzt %.0fkB Spiecher." .. E.OFF
 
 -- Error messages
-C.ERROR_RENAME_NOT_UNIQUE_FORMAT = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "Ihr habt bereits eine Notiz von dem Namen \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" (Namen müssen einzigartig sein)" .. NOTEBOOK_EM.OFF
-C.ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "Namen dürfen nicht leer sein." .. NOTEBOOK_EM.OFF
+C.ERROR_RENAME_NOT_UNIQUE_FORMAT = T.ERROR .. E.ON .. "Ihr habt bereits eine Notiz von dem Namen \"" .. E.OFF .. "%s" .. E.ON .. "\" (Namen müssen einzigartig sein)" .. E.OFF
+C.ERROR_RENAME_EMPTY = T.ERROR .. E.ON .. "Namen dürfen nicht leer sein." .. E.OFF
 
 ------------------------------------------------------------------------
 -- Help text
@@ -103,13 +104,13 @@ C.ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "Namen dürfen n
 Notebook.NOTEBOOK_SLASH = "/notizbuch"
 
 Notebook.NOTEBOOK_HELP = {
-	"Benutzt /notebook, /note, oder" .. Notebook.NOTEBOOK_SLASH .. "mit den folgenden Befehlen:",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_SHOW .. NOTEBOOK_EM.OFF .. " - Notebook anzeigen",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_HIDE .. NOTEBOOK_EM.OFF .. " - Notebook ausblenden",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_STATUS .. NOTEBOOK_EM.OFF .. " - die Status von Notebook anzeigen",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_LIST .. NOTEBOOK_EM.OFF .. " - die Notizen in Eurem Notebook listen",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. NOTEBOOK_EM.OFF .. " - die Wilkommen-Notiz wiederherstellen",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_HELP .. NOTEBOOK_EM.OFF .. " - diese Hilfe anzeigen",
+	"Gib /notebook, /note oder" .. Notebook.NOTEBOOK_SLASH .. "mit den folgenden Befehlen ein:",
+	"   " .. E.ON .. C.COMMAND_SHOW .. E.OFF .. " - Notebook anzeigen",
+	"   " .. E.ON .. C.COMMAND_HIDE .. E.OFF .. " - Notebook ausblenden",
+	"   " .. E.ON .. C.COMMAND_STATUS .. E.OFF .. " - die Status von Notebook anzeigen",
+	"   " .. E.ON .. C.COMMAND_LIST .. E.OFF .. " - die Notizen in Eurem Notebook listen",
+	"   " .. E.ON .. C.COMMAND_WELCOME .. E.OFF .. " - die Wilkommen-Notiz wiederherstellen",
+	"   " .. E.ON .. C.COMMAND_HELP .. E.OFF .. " - diese Hilfe anzeigen",
 	"Gebt den Slash-Befehlen ohne weiteren Befehlen ein, oder eine Taste in Tastaturbelegungsmenü belegen, um den Notebook-Fenster zu anzeigen oder ausblenden.",
 }
 
@@ -117,7 +118,8 @@ Notebook.NOTEBOOK_HELP = {
 --	First timer's brief manual
 
 Notebook.NOTEBOOK_FIRST_TIME_NOTE["title"] = "Wilkommen in Notebook!"
-Notebook.NOTEBOOK_FIRST_TIME_NOTE["description"] = [[Mit Notebook kann man viele Notizen im Spiel schreiben und spiechern, und sie zu die Freunde, Gruppe, Gilde und Chat-Kanäle senden. Wenn man normalerweise Makros benutzte, um Anweisung die Gruppe zu geben, oder Listen von Gegenständte zu führen -- Notebook könnte nützlich sein!
+Notebook.NOTEBOOK_FIRST_TIME_NOTE["description"] = [[
+Mit Notebook kann man viele Notizen im Spiel schreiben und spiechern, und sie zu die Freunde, Gruppe, Gilde und Chat-Kanäle senden. Wenn man normalerweise Makros benutzte, um Anweisung die Gruppe zu geben, oder Listen von Gegenständte zu führen -- Notebook könnte nützlich sein!
 
 Um eine neue Notiz zu schaffen, einfach klickt auf den Button "Schaffen" und schreibt einen Namen für der Notiz. Namen können bis zu 60 Zeichen lang sein, und können beliebige Zeichen beinhalten. Jedoch müssen jeder Name einzigartich sein -- man kann nicht mehrere Noten mit dem gleichen Namen haben. Nach der Schaffung einer Notiz kann man sie jederzeit ändern. Notizen können bis zu 4096 Zeichen lang sein. Wenn man mehr Platz benötigt, kann eine weitere Notiz einfach geschaffen werden. Man kann beliebig viele Notizen haben -- es gibt kein Limit!
 

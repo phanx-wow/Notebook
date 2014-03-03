@@ -2,11 +2,11 @@
 	Notebook
 	Allows you to record and share notes in-game
 	Written by Cirk of Doomhammer, 2005-2009
-	Updated by Phanx with permission, 2012-2013
+	Updated by Phanx with permission, 2012-2014
 	http://www.wowinterface.com/downloads/info4544-Notebook
 	http://www.curse.com/addons/wow/notebook
 ----------------------------------------------------------------------]]
---	Localization
+--	English Localization
 local NOTEBOOK, Notebook = ...
 Notebook.name = GetAddOnMetadata(NOTEBOOK, "Title")
 Notebook.description = GetAddOnMetadata(NOTEBOOK, "Notes")
