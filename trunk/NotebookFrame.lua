@@ -9,7 +9,6 @@
 
 local NOTEBOOK, Notebook = ...
 
-local NOTEBOOK_EM = Notebook.NOTEBOOK_EM
 local NOTEBOOK_TEXT = Notebook.NOTEBOOK_TEXT
 local NOTEBOOK_COMMANDS = Notebook.NOTEBOOK_COMMANDS
 local NOTEBOOK_HELP = Notebook.NOTEBOOK_HELP
@@ -31,9 +30,9 @@ NotebookFrame:SetMovable(true)
 
 NotebookFrame:SetScript("OnShow", function(self)
 	-- Set the frame title and "mine" tab tooltip with the player's name
-	local _playerName = UnitName("player")
-	NotebookFrame.TitleText:SetFormattedText(NOTEBOOK_TEXT.FRAME_TITLE_FORMAT, _playerName)
-	NotebookFrame.FilterTab2.tooltipText = format(NOTEBOOK_TEXT.MINE_TAB_TOOLTIP_FORMAT, _playerName)
+	local playerName = UnitName("player")
+	NotebookFrame.TitleText:SetFormattedText(NOTEBOOK_TEXT.FRAME_TITLE_FORMAT, playerName)
+	NotebookFrame.FilterTab2.tooltipText = format(NOTEBOOK_TEXT.MINE_TAB_TOOLTIP_FORMAT, playerName)
 	Notebook.Frame_UpdateList()
 end)
 

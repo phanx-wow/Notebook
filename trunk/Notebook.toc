@@ -5,8 +5,8 @@
 ## Title-ruRU: Блокнот
 ## Notes: Record and share notes in-game.
 ## Notes-deDE: Schreibt und teilt Notizen im Spiel.
-## Notes-esES: Escribir y guardar notas, y compartirlas en el juego.
-## Notes-esMX: Escribir y guardar notas, y compartirlas en el juego.
+## Notes-esES: Escribir y compartir notas en el juego.
+## Notes-esMX: Escribir y compartir notas en el juego.
 ## Notes-ruRU: Позволяет создавать заметки и делится ими в игре.
 
 ## Author: Phanx, Cirk
