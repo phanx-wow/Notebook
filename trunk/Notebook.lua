@@ -496,7 +496,7 @@ function Notebook.FilterList()
 			local ndata = _notesList[i]
 			if ndata.known then
 				_filteredCount = _filteredCount + 1
-				_filteredList[_filteredCount] = index
+				_filteredList[_filteredCount] = i
 			end
 		end
 	elseif _filterBy == TXT.MINE_TAB then
@@ -504,7 +504,7 @@ function Notebook.FilterList()
 			local ndata = _notesList[i]
 			if ndata.author == _playerName then
 				_filteredCount = _filteredCount + 1
-				_filteredList[_filteredCount] = index
+				_filteredList[_filteredCount] = i
 			end
 		end
 	elseif _filterBy == TXT.RECENT_TAB then
@@ -512,17 +512,16 @@ function Notebook.FilterList()
 			local ndata = _notesList[i]
 			if ndata.recent then
 				_filteredCount = _filteredCount + 1
-				_filteredList[_filteredCount] = index
+				_filteredList[_filteredCount] = i
 			end
 		end
 	else
 		for i = 1, #_notesList do
-			local ndata = _notesList[i]
-			tinsert(_filteredList, index)
+			tinsert(_filteredList, i)
 		end
 		_filteredCount = _notesCount
 	end
-	table.sort(_filteredList, Notebook.CompareOnTitle)
+	sort(_filteredList, Notebook.CompareOnTitle)
 end
 
 function Notebook.UpdateNotKnown(removeTitle)
@@ -764,7 +763,10 @@ end
 --	Initialization functions
 ------------------------------------------------------------------------
 
-function Notebook.ADDON_LOADED()
+function Notebook.ADDON_LOADED(addon)
+	if addon ~= NOTEBOOK then return end
+	NotebookFrame:UnregisterEvent("ADDON_LOADED")
+
 	if not NotebookState then
 		NotebookState = {}
 	end
@@ -773,9 +775,15 @@ function Notebook.ADDON_LOADED()
 		_firstTimeLoad = true
 	end
 	_notesList = NotebookState.Notes
+
+	if IsLoggedIn() then
+		Notebook.PLAYER_LOGIN()
+	end
 end
 
 function Notebook.PLAYER_LOGIN()
+	NotebookFrame:UnregisterEvent("PLAYER_LOGIN")
+
 	-- Load notes
 	Notebook.LoadData()
 	if _firstTimeLoad then
@@ -954,7 +962,7 @@ function Notebook.Frame_UpdateList(self, offset, autoScroll)
 		end
 	end
 	if autoScroll and NotebookFrame.selectedID then
-		local index = nil
+		local index
 		for i = 1, _filteredCount do
 			local ndata = _notesList[_filteredList[i]]
 			if ndata.id == NotebookFrame.selectedID then
@@ -984,8 +992,9 @@ function Notebook.Frame_UpdateList(self, offset, autoScroll)
 		if index <= _filteredCount then
 			local titleText = button.TitleText
 			local titleHighlight = button.TitleHighlight
-			local ndata = _notesList[_filteredList[index]]
-			button.nindex = _filteredList[index]
+			local filteredIndex = _filteredList[index]
+			local ndata = _notesList[filteredIndex]
+			button.nindex = filteredIndex
 			if ndata.saved or (NotebookFrame.editing and NotebookFrame.selectedID == ndata.id) then
 				titleText:SetText(ndata.title .. TXT.TITLE_CHANGE_NOT_SAVED)
 			else
@@ -1095,8 +1104,6 @@ function Notebook.Frame_ListButtonOnClick(self, clicked)
 end
 
 function Notebook.Frame_DropdownInitialize(self)
-	local ChatTypeInfo = getmetatable(ChatTypeInfo).__index -- Blizzard stupidity in 5.1
-
 	-- Called by the UI dropdown code when building the dropdown menu, it sets
 	-- the UIDROPDOWNMENU_MENU_LEVEL (1 to N) and UIDROPDOWNMENU_MENU_VALUE
 	-- (set to passed text string) fields as needed for the various menus and
@@ -1162,72 +1169,84 @@ function Notebook.Frame_DropdownInitialize(self)
 		if UIDROPDOWNMENU_MENU_VALUE == TXT.SEND_OPTION then
 			info = UIDropDownMenu_CreateInfo()
 			info.notCheckable = 1
-
-			-- Send to target
-			info.text = TXT.SEND_TO_TARGET
-			info.value = TXT.SEND_TO_TARGET
-			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER"].r * 255, ChatTypeInfo["WHISPER"].g * 255, ChatTypeInfo["WHISPER"].b * 255 )
-			info.disabled = (not UnitCanCooperate("player", "target")) and 1 or nil
 			info.func = Notebook.Frame_DropdownSelect
-			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 
-			-- Send to player
+			-- Send to specified player
 			info.text = TXT.SEND_TO_PLAYER
 			info.value = TXT.SEND_TO_PLAYER
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER"].r * 255, ChatTypeInfo["WHISPER"].g * 255, ChatTypeInfo["WHISPER"].b * 255 )
-			info.disabled = nil
-			info.func = Notebook.Frame_DropdownSelect
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 
-			-- Send to instance
-			info.text = TXT.SEND_TO_INSTANCE
-			info.value = TXT.SEND_TO_INSTANCE
-			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["INSTANCE_CHAT"].r * 255, ChatTypeInfo["INSTANCE_CHAT"].g * 255, ChatTypeInfo["INSTANCE_CHAT"].b * 255 )
-			info.disabled = (GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE) == 0) and 1 or nil
-			info.func = Notebook.Frame_DropdownSelect
-			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			if UnitCanCooperate("player", "target") then
+				-- Send to target
+				info.text = TXT.SEND_TO_TARGET
+				info.value = TXT.SEND_TO_TARGET
+				info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER"].r * 255, ChatTypeInfo["WHISPER"].g * 255, ChatTypeInfo["WHISPER"].b * 255 )
+				info.func = Notebook.Frame_DropdownSelect
+				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			end
 
-			-- Send to party
-			info.text = TXT.SEND_TO_PARTY
-			info.value = TXT.SEND_TO_PARTY
-			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["PARTY"].r * 255, ChatTypeInfo["PARTY"].g * 255, ChatTypeInfo["PARTY"].b * 255 )
-			info.disabled = (IsInRaid() or not IsInGroup()) and 1 or nil
-			info.func = Notebook.Frame_DropdownSelect
-			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+				-- Send to instance
+				info.text = TXT.SEND_TO_INSTANCE
+				info.value = TXT.SEND_TO_INSTANCE
+				info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["INSTANCE_CHAT"].r * 255, ChatTypeInfo["INSTANCE_CHAT"].g * 255, ChatTypeInfo["INSTANCE_CHAT"].b * 255 )
+				info.func = Notebook.Frame_DropdownSelect
+				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			end
 
-			-- Send to raid (only if you are leader or officer)
-			info.text = TXT.SEND_TO_RAID
-			info.value = TXT.SEND_TO_RAID
-			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["RAID"].r * 255, ChatTypeInfo["RAID"].g * 255, ChatTypeInfo["RAID"].b * 255 )
-			info.disabled = (not IsInRaid() or not UnitIsGroupLeader("player") or not UnitIsGroupAssistant("player")) and 1 or nil
-			info.func = Notebook.Frame_DropdownSelect
-			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			if IsInRaid() or IsInGroup(LE_PARTY_CATEGORY_HOME) then
+				-- Send to party
+				info.text = TXT.SEND_TO_PARTY
+				info.value = TXT.SEND_TO_PARTY
+				info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["PARTY"].r * 255, ChatTypeInfo["PARTY"].g * 255, ChatTypeInfo["PARTY"].b * 255 )
+				info.func = Notebook.Frame_DropdownSelect
+				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			end
 
-			-- Send to guild
-			info.text = TXT.SEND_TO_GUILD
-			info.value = TXT.SEND_TO_GUILD
-			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["GUILD"].r * 255, ChatTypeInfo["GUILD"].g * 255, ChatTypeInfo["GUILD"].b * 255 )
-			info.disabled = not IsInGuild() and 1 or nil
-			info.func = Notebook.Frame_DropdownSelect
-			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			if IsInRaid() and (UnitIsGroupLeader("player") and UnitIsGroupAssistant("player")) then
+				-- Send to raid (only if you are leader or officer)
+				info.text = TXT.SEND_TO_RAID
+				info.value = TXT.SEND_TO_RAID
+				info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["RAID"].r * 255, ChatTypeInfo["RAID"].g * 255, ChatTypeInfo["RAID"].b * 255 )
+				info.func = Notebook.Frame_DropdownSelect
+				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			end
 
-			-- Send to officer
-			info.text = TXT.SEND_TO_OFFICER
-			info.value = TXT.SEND_TO_OFFICER
-			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["OFFICER"].r * 255, ChatTypeInfo["OFFICER"].g * 255, ChatTypeInfo["OFFICER"].b * 255 )
-			info.disabled = not IsInGuild() and 1 or nil
-			info.func = Notebook.Frame_DropdownSelect
-			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			if IsInGuild() then
+				local _, _, rank = GetGuildInfo("player")
+				GuildControlSetRank(1 + rank)
+				local _, guildSpeak, _, officerSpeak = GuildControlGetRankFlags()
 
-			-- Send to channel
-			info.text = TXT.SEND_TO_CHANNEL
-			info.value = TXT.SEND_TO_CHANNEL
-			info.colorCode = nil
-			info.disabled = #channelList == 0 and 1 or nil
-			info.func = nil
-			info.hasArrow = 1
-			info.keepShownOnClick = 1
-			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+				if guildSpeak then
+					-- Send to guild
+					info.text = TXT.SEND_TO_GUILD
+					info.value = TXT.SEND_TO_GUILD
+					info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["GUILD"].r * 255, ChatTypeInfo["GUILD"].g * 255, ChatTypeInfo["GUILD"].b * 255 )
+					info.func = Notebook.Frame_DropdownSelect
+					UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+				end
+
+				if officerSpeak then
+					-- Send to officer
+					info.text = TXT.SEND_TO_OFFICER
+					info.value = TXT.SEND_TO_OFFICER
+					info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["OFFICER"].r * 255, ChatTypeInfo["OFFICER"].g * 255, ChatTypeInfo["OFFICER"].b * 255 )
+					info.func = Notebook.Frame_DropdownSelect
+					UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+				end
+			end
+
+			if #channelList > 0 or BNGetConversationInfo(1) then
+				-- Send to channel
+				info.text = TXT.SEND_TO_CHANNEL
+				info.value = TXT.SEND_TO_CHANNEL
+				info.colorCode = nil
+				info.func = nil
+				info.hasArrow = 1
+				info.keepShownOnClick = 1
+				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
+			end
 		end
 
 	elseif UIDROPDOWNMENU_MENU_LEVEL == 3 then
@@ -1240,7 +1259,6 @@ function Notebook.Frame_DropdownInitialize(self)
 					displayNum = Chatmanager.GetChannelInfo(channelNum)
 				end
 				local color = ChatTypeInfo["CHANNEL" .. channelNum]
-				info = UIDropDownMenu_CreateInfo()
 				info.text = format(TXT.CHANNEL_NAME_FORMAT, displayNum, channelName)
 				info.value = format(NOTEBOOK_CHANNEL_VALUE_FORMAT, TXT.SEND_TO_CHANNEL, channelNum, channelName)
 				info.colorCode = format("|cff%02x%02x%02x", 255*color.r, 255*color.g, 255*color.b)
@@ -1251,7 +1269,6 @@ function Notebook.Frame_DropdownInitialize(self)
 			for i = 1, BNGetMaxNumConversations() do
 				if BNGetConversationInfo(i) == "conversation" then
 					local color = ChatTypeInfo["BN_CONVERSATION"]
-					info = UIDropDownMenu_CreateInfo()
 					info.text = format(CONVERSATION_NAME, i + MAX_WOW_CHAT_CHANNELS)
 					info.value = format(NOTEBOOK_CHANNEL_VALUE_FORMAT, TXT.SEND_TO_CHANNEL, i, "BN_CONVERSATION")
 					info.colorCode = format("|cff%02x%02x%02x", 255*color.r, 255*color.g, 255*color.b)
@@ -1822,29 +1839,8 @@ end
 ------------------------------------------------------------------------
 
 function Notebook.OnEvent(self, event, ...)
-	if strsub(event, 1, 9) == "CHAT_MSG_" then
-		return Notebook.ChatMessageHandler(event, ...)
-
-	elseif event == "ADDON_LOADED" and (...) == NOTEBOOK then
-		_serverName = GetRealmName()
-		Notebook.ADDON_LOADED()
-		if _serverName and _playerName then
-			Notebook.PLAYER_LOGIN()
-		end
-		self:UnregisterEvent("ADDON_LOADED")
-
-	elseif event == "PLAYER_LOGIN" then
-		_playerName = UnitName("player")
-		if _serverName and _playerName then
-			Notebook.PLAYER_LOGIN()
-		end
-
-	elseif event == "PLAYER_LOGOUT" then
-		if _serverName and _playerName then
-			Notebook.PLAYER_LOGOUT()
-		end
-
-	end
+	print("Notebook", event, ...)
+	return Notebook[event] and Notebook[event](...) or Notebook.ChatMessageHandler(event, ...)
 end
 
 ------------------------------------------------------------------------
@@ -1959,62 +1955,55 @@ SLASH_NOTEBOOK2 = "/note"
 SLASH_NOTEBOOK3 = Notebook.NOTEBOOK_SLASH
 
 local SlashHandlers = {
-	[CMD.CMD_LIST] = function()
-			DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_LIST_CONFIRM)
-			local filterMode = _filterBy
-			_filterBy = TXT.KNOWN_TAB
+	[CMD.COMMAND_DEBUGON] = function(params)
+		_debugFrame = params and _G[params] or DEFAULT_CHAT_FRAME
+		DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_DEBUGON_CONFIRM)
+	end,
+	[CMD.COMMAND_DEBUGOFF] = function()
+		_debugFrame = nil
+		DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_DEBUGOFF_CONFIRM)
+	end,
+	[CMD.COMMAND_SHOW] = function()
+		ShowUIPanel(NotebookFrame)
+	end,
+	[CMD.COMMAND_HIDE] = function()
+		HideUIPanel(NotebookFrame)
+	end,
+	[CMD.COMMAND_STATUS] = function()
+		UpdateAddOnMemoryUsage()
+		DEFAULT_CHAT_FRAME:AddMessage(format(CMD.COMMAND_STATUS_FORMAT, _notesCount, GetAddOnMemoryUsage(NOTEBOOK) + 0.5))
+	end,
+	[CMD.COMMAND_LIST] = function()
+		DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_LIST_CONFIRM)
+		local filterMode = _filterBy
+		_filterBy = TXT.KNOWN_TAB
+		Notebook.FilterList()
+		for i = 1, #_filteredList do
+			local ndata = _notesList[_filteredList[i]]
+			if ndata then
+				local text = format(CMD.COMMAND_LIST_FORMAT, ndata.title, strlen(ndata.description), ndata.author, Notebook.UnpackDate(ndata.date))
+				DEFAULT_CHAT_FRAME:AddMessage(text)
+			end
+		end
+		if _filterBy ~= filterMode then
+			_filterBy = filterMode
 			Notebook.FilterList()
-			for i = 1, #_filteredList do
-				local ndata = _notesList[_filteredList[i]]
-				if ndata then
-					local text = format(CMD.COMMAND_LIST_FORMAT, ndata.title, strlen(ndata.description), ndata.author, Notebook.UnpackDate(ndata.date))
-					DEFAULT_CHAT_FRAME:AddMessage(text)
-				end
-			end
-			if _filterBy ~= filterMode then
-				_filterBy = filterMode
-				Notebook.FilterList()
-			end
-		end,
-		[CMD.CMD_SHOW] = function()
-			ShowUIPanel(NotebookFrame)
-		end,
-		[CMD.CMD_HIDE] = function()
-			HideUIPanel(NotebookFrame)
-		end,
-		[CMD.COMMAND_WELCOME] = function()
-			local ndata = Notebook.FindByTitle(_firstTimeNote.title, true)
-			if not ndata then
-				local ndata = Notebook.Add(_firstTimeNote.title, _firstTimeNote.author, _firstTimeNote.date, _firstTimeNote.description, true, true, false)
-				Notebook.UpdateNotKnown()
-				Notebook.FilterList()
-				Notebook.Frame_UpdateList()
-				Notebook.Frame_TabButtonOnClick(1)
-				NotebookFrame:Show()
-			else
-				ChatFrame1:AddMessage(ERROR_PREFIX .. " " .. format(CMD.ERROR_PREFIX, _firstTimeNote.title))
-			end
-		end,
-		[CMD.COMMAND_STATUS] = function()
-			UpdateAddOnMemoryUsage()
-			DEFAULT_CHAT_FRAME:AddMessage(format(CMD.COMMAND_STATUS_FORMAT, _notesCount, GetAddOnMemoryUsage(NOTEBOOK) + 0.5))
-		end,
-		[CMD.COMMAND_DEBUGON] = function(params)
-			_debugFrame = params and _G[params] or DEFAULT_CHAT_FRAME
-			DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_DEBUGON_CONFIRM)
-		end,
-		[CMD.COMMAND_DEBUGOFF] = function()
-			_debugFrame = nil
-			DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_DEBUGOFF_CONFIRM)
-		end,
-		[CMD.COMMAND_STATUS] = function()
-		end,
-		[CMD.COMMAND_STATUS] = function()
-		end,
-		[CMD.COMMAND_STATUS] = function()
-		end,
-	}
-
+		end
+	end,
+	[CMD.COMMAND_WELCOME] = function()
+		local ndata = Notebook.FindByTitle(_firstTimeNote.title, true)
+		if not ndata then
+			local ndata = Notebook.Add(_firstTimeNote.title, _firstTimeNote.author, _firstTimeNote.date, _firstTimeNote.description, true, true, false)
+			Notebook.UpdateNotKnown()
+			Notebook.FilterList()
+			Notebook.Frame_UpdateList()
+			Notebook.Frame_TabButtonOnClick(1)
+			NotebookFrame:Show()
+		else
+			ChatFrame1:AddMessage(ERROR_PREFIX .. " " .. format(CMD.ERROR_PREFIX, _firstTimeNote.title))
+		end
+	end,
+}
 
 SlashCmdList["NOTEBOOK"] = function(text)
 	if not text or text == "" then

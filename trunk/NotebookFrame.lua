@@ -459,7 +459,7 @@ editScroll:SetScript("OnMouseUp", function(self, button)
 	-- since the edit box magically resizes itself based on the height of
 	-- its contents since some patches ago.
 	if button == "LeftButton" and NotebookFrame.EditBox:IsShown()
-	and not NotebookFrame.EditBox:IsMouseOver() and not NotebookFrame.EditScrollBar:IsMouseOver() then
+	and not NotebookFrame.EditBox:IsMouseOver() and not NotebookFrame.EditScrollFrame.ScrollBar:IsMouseOver() then
 		NotebookFrame.EditBox:SetFocus()
 	end
 end)
