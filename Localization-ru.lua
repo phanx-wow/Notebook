@@ -9,7 +9,6 @@
 --	Перевод на Русский: Джоан-Подземье
 if GetLocale() ~= "ruRU" then return end
 local NOTEBOOK, Notebook = ...
-local NOTEBOOK_EM = Notebook.NOTEBOOK_EM
 
 BINDING_NAME_NOTEBOOK_PANEL = "Отобразить Блокнот"
 
@@ -32,7 +31,7 @@ T.CANCEL_BUTTON_TOOLTIP = "Откат изменений заметки"
 T.ADD_BUTTON = "Добавить"
 T.ADD_BUTTON_TOOLTIP = "Добавить эту заметку в блокнот"
 T.UPDATE_BUTTON = "Обновить"
-T.UPDATE_BUTTON_TOOLTIP = "Update your previously saved note with this new text" -- needs check
+--T.UPDATE_BUTTON_TOOLTIP = "Update your previously saved note with this new text"
 T.NEW_BUTTON = "Новая"
 T.NEW_BUTTON_TOOLTIP = "Создать новую заметку"
 T.CHECK_SEND_BUTTON = "Возможно отпр."
@@ -40,7 +39,7 @@ T.CHECK_CAN_SEND_TOOLTIP = "Эту заметку возможно отправ�
 T.CHECK_NOT_SEND_TOOLTIP = "Эту заметку невозможно отправить"
 
 T.DETAILS_DATE_KNOWN_SAVED_FORMAT = "Сохранено %s"
-T.DETAILS_DATE_KNOWN_UPDATED_FORMAT = "%s by %s" -- needs check
+--T.DETAILS_DATE_KNOWN_UPDATED_FORMAT = "%s by %s"
 T.DETAILS_DATE_UNSAVED_FORMAT = "%s для %s"
 T.DETAILS_SIZE_FORMAT = "- %d символов"
 T.DETAILS_NOT_KNOWN_TEXT = "- Не сохранено"
@@ -65,11 +64,11 @@ T.CHANNEL_NAME_FORMAT = "%d. %s"
 
 T.ENTER_PLAYER_NAME_TEXT = "Введите имя игрока что бы отправить:"
 T.ENTER_NEW_TITLE_TEXT = "Введите название новой заметки:"
-T.CONFIRM_REMOVE_FORMAT = "Вы действительно хотите удалить \"%s\"?"
-T.CONFIRM_UPDATE_FORMAT = "Хоите заменить \"%s\" заметку от %s?"
-T.CONFIRM_SERVER_CHANNEL_FORMAT = "Хотите отправить \"%s\" в канал %s ?"
+T.CONFIRM_REMOVE_FORMAT = "Вы действительно хотите удалить %q?"
+T.CONFIRM_UPDATE_FORMAT = "Хоите заменить %q заметку от %s?"
+T.CONFIRM_SERVER_CHANNEL_FORMAT = "Хотите отправить %q в канал %s ?"
 
-T.NOTE_RECEIVED_FORMAT = NOTEBOOK_EM.ON .. "В Блокнот Добавлена Заметка \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" от " .. NOTEBOOK_EM.OFF .. "%s"
+T.NOTE_RECEIVED_FORMAT = "В Блокнот Добавлена Заметка %q от %s"
 
 ------------------------------------------------------------------------
 -- Slash commands and responses
@@ -81,21 +80,30 @@ C.COMMAND_LIST = "Лист"
 C.COMMAND_SHOW = "показать"
 C.COMMAND_HIDE = "скрыть"
 C.COMMAND_OPTIONS = "опции"
-C.COMMAND_DEBUGON = "debugon" -- needs check
-C.COMMAND_DEBUGOFF = "debugoff" -- needs check
-C.COMMAND_WELCOME = "welcome" -- needs check
+--C.COMMAND_DEBUGON = "debugon"
+--C.COMMAND_DEBUGOFF = "debugoff"
+--C.COMMAND_WELCOME = "welcome"
 C.COMMAND_STATUS = "статус"
 
 -- Slash command responses
 C.COMMAND_DEBUGON_CONFIRM = "Отладка Блокнота Включена"
 C.COMMAND_DEBUGOFF_CONFIRM = "Отладка Блокнота Выключена"
-C.COMMAND_LIST_CONFIRM = NOTEBOOK_EM.ON .. "Notebook contains the following notes:" .. NOTEBOOK_EM.OFF -- needs check
-C.COMMAND_LIST_FORMAT = NOTEBOOK_EM.ON .. "- " .. NOTEBOOK_EM.OFF .. "%s " .. NOTEBOOK_EM.ON .. "(%d characters, by %s, %s)" .. NOTEBOOK_EM.OFF -- needs check
-C.COMMAND_STATUS_FORMAT = NOTEBOOK_EM.ON .. "Блокнот содержит %d заметок и они занимают %.0fkB памяти" .. NOTEBOOK_EM.OFF
+--C.COMMAND_LIST_CONFIRM = "Notebook contains the following notes:"
+--C.COMMAND_LIST_FORMAT = "- %s (%d characters, by %s, %s)"
+C.COMMAND_STATUS_FORMAT = "Блокнот содержит %d заметок и они занимают %.0fkB памяти"
 
 -- Error messages
-C.ERROR_RENAME_NOT_UNIQUE_FORMAT = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "You already have a note titled \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" (titles must be unique)" .. NOTEBOOK_EM.OFF -- needs check
-C.ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "You cannot have an empty title" .. NOTEBOOK_EM.OFF -- needs check
+--C.ERROR_RENAME_NOT_UNIQUE_FORMAT = "You already have a note titled %q. Titles must be unique."
+--C.ERROR_RENAME_EMPTY = "You cannot have an empty title."
+--C.ERROR_SEND_COOLDOWN = "You cannot send another note just yet."
+--C.ERROR_SEND_INVALID = "You must provide a valid note title and channel."
+--C.ERROR_SEND_INVALID_NOTE = "Could not find a note titled %q."
+--C.ERROR_SEND_EDITING = "You cannot send a note with unsaved changes."
+--C.ERROR_SEND_RAID_LEADER = "You are not the raid leader or assistant."
+--C.ERROR_SEND_NO_NAME = "You must enter a character name or BattleTag."
+--C.ERROR_SEND_NO_CHANNEL = "You must enter a channel name."
+--C.ERROR_SEND_INVALID_CHANNEL = "Could not find a channel %s."
+--C.ERROR_SEND_UNKNOWN_CHANNEL = "%q is not a supported channel type."
 
 ------------------------------------------------------------------------
 -- Help text
@@ -103,22 +111,21 @@ C.ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "You cannot have
 Notebook.NOTEBOOK_SLASH = "/блокнот"
 
 Notebook.NOTEBOOK_HELP = {
-	NOTEBOOK_EM.ON .. "/notebook " .. NOTEBOOK_COMMANDS.COMMAND_HELP .. NOTEBOOK_EM.OFF .. " Показывает это сообщение, с командами.",
-	NOTEBOOK_EM.ON .. "/notebook " .. NOTEBOOK_EM.OFF .. "Показывает окно Блокнота",
-	NOTEBOOK_EM.ON .. "/notebook " .. NOTEBOOK_COMMANDS.COMMAND_SHOW .. NOTEBOOK_EM.OFF .. " Показывает окно Блокнота",
-	NOTEBOOK_EM.ON .. "/notebook " .. NOTEBOOK_COMMANDS.COMMAND_HIDE .. NOTEBOOK_EM.OFF .. " Уберает окно Блокнота",
-	NOTEBOOK_EM.ON .. "/notebook " .. NOTEBOOK_COMMANDS.COMMAND_LIST .. NOTEBOOK_EM.OFF .. " Выводит лист названий заметок и данными о них",
-	NOTEBOOK_EM.ON .. "/notebook " .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. NOTEBOOK_EM.OFF .. " restores the Welcome note",
-	NOTEBOOK_EM.ON .. "/notebook " .. NOTEBOOK_COMMANDS.COMMAND_STATUS .. NOTEBOOK_EM.OFF .. " Выводит статус Блокнота, кол-во заметок и кол-во исп. памяти",
-	"",
-	"Для вызова Блокнота наберите в чате " .. NOTEBOOK_EM.ON .. "/note" .. NOTEBOOK_EM.OFF .. " или " .. NOTEBOOK_EM.ON .. "/notebook" .. NOTEBOOK_EM.OFF .. " используйте данную команду для кнопки вызова окна Блокнота.",
+	"Введите " .. Notebook.NOTEBOOK_SLASH .. ", /notebook или /note с этих команд:", -- needs check
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_SHOW    .. " - Показывает окно Блокнота",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_HIDE    .. " - Уберает окно Блокнота",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_LIST    .. " - Выводит лист названий заметок и данными о них",
+--	"- " .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. " - restores the Welcome note",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_STATUS  .. " - Выводит статус Блокнота, кол-во заметок и кол-во исп. памяти",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_HELP .. " Показывает это сообщение:",
+	"Для вызова Блокнота наберите в чате используйте данную команду для кнопки вызова окна Блокнота.", -- needs check
 }
 
 ------------------------------------------------------------------------
 --	First timer's brief manual
 
-Notebook.NOTEBOOK_FIRST_TIME_NOTE["title"] = "Добро Пожаловать в Блокнот!"
-Notebook.NOTEBOOK_FIRST_TIME_NOTE["description"] = [[Блокнот позволяет записывать, сохранять и упорядочивать ваши заметки на самые разные темы. Кроме этого вы так же можете отправить как саму заметку так и ее текст игроку или в любой из каналов. Например в общий канал, канал гильдии, канал офицеров канал группы или рейда!
+Notebook.NOTEBOOK_FIRST_TIME_NOTE.title = "Добро Пожаловать в Блокнот!"
+Notebook.NOTEBOOK_FIRST_TIME_NOTE.description = [[Блокнот позволяет записывать, сохранять и упорядочивать ваши заметки на самые разные темы. Кроме этого вы так же можете отправить как саму заметку так и ее текст игроку или в любой из каналов. Например в общий канал, канал гильдии, канал офицеров канал группы или рейда!
 
 Что бы создать новую заметку нажмите на кнопку “Новая” после введите название. Название заметок может содержать до 60 абсолютно любых символов, но должно быть уникальным! Например вы не сможете создать две заметки с одинаковыми названиями “Развлечения” и “Развлечения”, используйте фантазию и назовите вторую заметку “Развлечения 2” или “Другие Развлечения”
 

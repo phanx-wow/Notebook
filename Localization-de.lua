@@ -9,7 +9,6 @@
 --	Deutsch Übersetzung von Phanx
 if GetLocale() ~= "deDE" then return end
 local NOTEBOOK, Notebook = ...
-local E = Notebook.NOTEBOOK_EM
 
 BINDING_NAME_NOTEBOOK_PANEL = "Notebook ein/aus"
 
@@ -66,11 +65,11 @@ T.CHANNEL_NAME_FORMAT = "%d. %s"
 
 T.ENTER_PLAYER_NAME_TEXT = "Gebt den Spielername ein, denen diese Notiz senden:"
 T.ENTER_NEW_TITLE_TEXT = "Gebt einen neuen Name für dieser Notiz ein:"
-T.CONFIRM_REMOVE_FORMAT = "Wollt Ihr wirklich die Notiz \"%s\" dauerhaft löschen?"
-T.CONFIRM_UPDATE_FORMAT = "Wollt Ihr wirklich die Notiz \"%s\" durch der Version von %s ersetzen?"
-T.CONFIRM_SERVER_CHANNEL_FORMAT = "Wollt Ihr wirklich die Notiz \"%s\" zu dem Channel %s senden?"
+T.CONFIRM_REMOVE_FORMAT = "Wollt Ihr wirklich die Notiz %q dauerhaft löschen?"
+T.CONFIRM_UPDATE_FORMAT = "Wollt Ihr wirklich die Notiz %q durch der Version von %s ersetzen?"
+T.CONFIRM_SERVER_CHANNEL_FORMAT = "Wollt Ihr wirklich die Notiz %q zu dem Channel %s senden?"
 
-T.NOTE_RECEIVED_FORMAT = E.ON .. "Notebook hat die Notiz \"" .. E.OFF .. "%s" .. E.ON .. "\" von " .. E.OFF .. "%s" .. E.ON .. "hinzugefügt." .. E.OFF
+T.NOTE_RECEIVED_FORMAT = "Notebook hat die Notiz %q von %s hinzugefügt."
 
 ------------------------------------------------------------------------
 -- Slash commands and responses
@@ -90,13 +89,22 @@ C.COMMAND_STATUS = "status"
 -- Slash command responses
 C.COMMAND_DEBUGON_CONFIRM = "Notebook-Debugging wird aktiviert."
 C.COMMAND_DEBUGOFF_CONFIRM = "Notebook-Debugging wird deaktiviert."
-C.COMMAND_LIST_CONFIRM = E.ON .. "Notebook enthält die folgenden Notizen:" .. E.OFF
-C.COMMAND_LIST_FORMAT = E.ON .. "- " .. E.OFF .. "%s " .. E.ON .. "(%d Zeichen, von %s, %s)" .. E.OFF
-C.COMMAND_STATUS_FORMAT = E.ON .. "Notebook enthält %d Noitzen, und benutzt %.0fkB Spiecher." .. E.OFF
+C.COMMAND_LIST_CONFIRM = "Notebook enthält die folgenden Notizen:"
+C.COMMAND_LIST_FORMAT = " - %s (%d Zeichen, von %s, %s)"
+C.COMMAND_STATUS_FORMAT = "Notebook enthält %d Noitzen, und benutzt %.0fkB Spiecher."
 
 -- Error messages
-C.ERROR_RENAME_NOT_UNIQUE_FORMAT = T.ERROR .. E.ON .. "Ihr habt bereits eine Notiz von dem Namen \"" .. E.OFF .. "%s" .. E.ON .. "\" (Namen müssen einzigartig sein)" .. E.OFF
-C.ERROR_RENAME_EMPTY = T.ERROR .. E.ON .. "Namen dürfen nicht leer sein." .. E.OFF
+C.ERROR_RENAME_NOT_UNIQUE_FORMAT = "Ihr habt bereits eine Notiz von dem Namen %q. Namen müssen einzigartig sein."
+C.ERROR_RENAME_EMPTY = "Namen dürfen nicht leer sein."
+C.ERROR_SEND_COOLDOWN = "Ihr dürft eine weitere Notiz noch nicht senden."
+C.ERROR_SEND_INVALID = "Ihr müsst eine gültige Notiz und Channel eingeben."
+C.ERROR_SEND_INVALID_NOTE = "Notiz %q nicht gefunden."
+C.ERROR_SEND_EDITING = "Ihr dürft eine Notiz mit nicht gespeicherten Änderungen nicht senden."
+C.ERROR_SEND_RAID_LEADER = "Ihr seid nicht der Schlachtzugsleiter oder Assistent."
+C.ERROR_SEND_NO_NAME = "Ihr müsst einen Charakternamen oder BattleTag eingeben."
+C.ERROR_SEND_NO_CHANNEL = "Ihr müsst einen Channelnamen eingeben."
+C.ERROR_SEND_INVALID_CHANNEL = "Channel %s nicht gefunden."
+C.ERROR_SEND_UNKNOWN_CHANNEL = "%q ist kein unterstützter Chatnachrichtentyp."
 
 ------------------------------------------------------------------------
 -- Help text
@@ -104,21 +112,21 @@ C.ERROR_RENAME_EMPTY = T.ERROR .. E.ON .. "Namen dürfen nicht leer sein." .. E.
 Notebook.NOTEBOOK_SLASH = "/notizbuch"
 
 Notebook.NOTEBOOK_HELP = {
-	"Gib /notebook, /note oder" .. Notebook.NOTEBOOK_SLASH .. "mit den folgenden Befehlen ein:",
-	"   " .. E.ON .. C.COMMAND_SHOW .. E.OFF .. " - Notebook anzeigen",
-	"   " .. E.ON .. C.COMMAND_HIDE .. E.OFF .. " - Notebook ausblenden",
-	"   " .. E.ON .. C.COMMAND_STATUS .. E.OFF .. " - die Status von Notebook anzeigen",
-	"   " .. E.ON .. C.COMMAND_LIST .. E.OFF .. " - die Notizen in Eurem Notebook listen",
-	"   " .. E.ON .. C.COMMAND_WELCOME .. E.OFF .. " - die Wilkommen-Notiz wiederherstellen",
-	"   " .. E.ON .. C.COMMAND_HELP .. E.OFF .. " - diese Hilfe anzeigen",
+	"Gebt " .. Notebook.NOTEBOOK_SLASH .. ", /notebook oder /note mit den folgenden Befehlen ein:",
+	"- " .. C.COMMAND_SHOW    .. " - Notebook anzeigen",
+	"- " .. C.COMMAND_HIDE    .. " - Notebook ausblenden",
+	"- " .. C.COMMAND_STATUS  .. " - die Status von Notebook anzeigen",
+	"- " .. C.COMMAND_LIST    .. " - die Notizen in Eurem Notebook listen",
+	"- " .. C.COMMAND_WELCOME .. " - die Wilkommen-Notiz wiederherstellen",
+	"- " .. C.COMMAND_HELP    .. " - diese Hilfe anzeigen",
 	"Gebt den Slash-Befehlen ohne weiteren Befehlen ein, oder eine Taste in Tastaturbelegungsmenü belegen, um den Notebook-Fenster zu anzeigen oder ausblenden.",
 }
 
 ------------------------------------------------------------------------
 --	First timer's brief manual
 
-Notebook.NOTEBOOK_FIRST_TIME_NOTE["title"] = "Wilkommen in Notebook!"
-Notebook.NOTEBOOK_FIRST_TIME_NOTE["description"] = [[
+Notebook.NOTEBOOK_FIRST_TIME_NOTE.title = "Wilkommen in Notebook!"
+Notebook.NOTEBOOK_FIRST_TIME_NOTE.description = [[
 Mit Notebook kann man viele Notizen im Spiel schreiben und spiechern, und sie zu die Freunde, Gruppe, Gilde und Chat-Kanäle senden. Wenn man normalerweise Makros benutzte, um Anweisung die Gruppe zu geben, oder Listen von Gegenständte zu führen -- Notebook könnte nützlich sein!
 
 Um eine neue Notiz zu schaffen, einfach klickt auf den Button "Schaffen" und schreibt einen Namen für der Notiz. Namen können bis zu 60 Zeichen lang sein, und können beliebige Zeichen beinhalten. Jedoch müssen jeder Name einzigartich sein -- man kann nicht mehrere Noten mit dem gleichen Namen haben. Nach der Schaffung einer Notiz kann man sie jederzeit ändern. Notizen können bis zu 4096 Zeichen lang sein. Wenn man mehr Platz benötigt, kann eine weitere Notiz einfach geschaffen werden. Man kann beliebig viele Notizen haben -- es gibt kein Limit!

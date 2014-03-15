@@ -10,15 +10,10 @@
 local NOTEBOOK, Notebook = ...
 Notebook.name = GetAddOnMetadata(NOTEBOOK, "Title")
 Notebook.description = GetAddOnMetadata(NOTEBOOK, "Notes")
+Notebook.version = GetAddOnMetadata(NOTEBOOK, "Version")
 
 BINDING_HEADER_NOTEBOOK_TITLE = Notebook.name
 BINDING_NAME_NOTEBOOK_PANEL = "Toggle Notebook"
-
-local NOTEBOOK_EM = {
-	ON = "|cffffff00",
-	RED = "|cffff4000",
-	OFF = "|r",
-}
 
 ------------------------------------------------------------------------
 -- Miscellaneous text commands
@@ -72,27 +67,24 @@ local NOTEBOOK_TEXT = {
 
 	ENTER_PLAYER_NAME_TEXT = "Enter name of player to send to:",
 	ENTER_NEW_TITLE_TEXT = "Enter new title for note:",
-	CONFIRM_REMOVE_FORMAT = "Really delete \"%s\"?",
-	CONFIRM_UPDATE_FORMAT = "Really replace \"%s\" with the one from %s?",
-	CONFIRM_SERVER_CHANNEL_FORMAT = "Really send \"%s\" to the %s channel?",
+	CONFIRM_REMOVE_FORMAT = "Really delete %q?",
+	CONFIRM_UPDATE_FORMAT = "Really replace %q with the one from %s?",
+	CONFIRM_SERVER_CHANNEL_FORMAT = "Really send %q to the %s channel?",
 
-	NOTE_RECEIVED_FORMAT = NOTEBOOK_EM.ON .. "Notebook added note \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" from " .. NOTEBOOK_EM.OFF .. "%s",
+	NOTE_RECEIVED_FORMAT = "Notebook added note %q from %s.",
 
-	ELLIPSIS = "...",
-	MONTHNAME_1 = FULLDATE_MONTH_JANUARY,
-	MONTHNAME_2 = FULLDATE_MONTH_FEBRUARY,
-	MONTHNAME_3 = FULLDATE_MONTH_MARCH,
-	MONTHNAME_4 = FULLDATE_MONTH_APRIL,
-	MONTHNAME_5 = FULLDATE_MONTH_MAY,
-	MONTHNAME_6 = FULLDATE_MONTH_JUNE,
-	MONTHNAME_7 = FULLDATE_MONTH_JULY,
-	MONTHNAME_8 = FULLDATE_MONTH_AUGUST,
-	MONTHNAME_9 = FULLDATE_MONTH_SEPTEMBER,
+	MONTHNAME_01 = FULLDATE_MONTH_JANUARY,
+	MONTHNAME_02 = FULLDATE_MONTH_FEBRUARY,
+	MONTHNAME_03 = FULLDATE_MONTH_MARCH,
+	MONTHNAME_04 = FULLDATE_MONTH_APRIL,
+	MONTHNAME_05 = FULLDATE_MONTH_MAY,
+	MONTHNAME_06 = FULLDATE_MONTH_JUNE,
+	MONTHNAME_07 = FULLDATE_MONTH_JULY,
+	MONTHNAME_08 = FULLDATE_MONTH_AUGUST,
+	MONTHNAME_09 = FULLDATE_MONTH_SEPTEMBER,
 	MONTHNAME_10 = FULLDATE_MONTH_OCTOBER,
 	MONTHNAME_11 = FULLDATE_MONTH_NOVEMBER,
 	MONTHNAME_12 = FULLDATE_MONTH_DECEMBER,
-	DEBUG = NOTEBOOK_EM.ON .. Notebook.name .. ": " .. NOTEBOOK_EM.OFF,
-	ERROR = NOTEBOOK_EM.RED .. Notebook.name .. ": " .. NOTEBOOK_EM.OFF,
 }
 
 ------------------------------------------------------------------------
@@ -110,27 +102,36 @@ local NOTEBOOK_COMMANDS = {
 	COMMAND_STATUS = "status",
 
 	-- Slash command responses
-	COMMAND_DEBUGON_CONFIRM = "Notebook debug is enabled",
-	COMMAND_DEBUGOFF_CONFIRM = "Notebook debug is disabled",
-	COMMAND_LIST_CONFIRM = NOTEBOOK_EM.ON .. "Notebook contains the following notes:" .. NOTEBOOK_EM.OFF,
-	COMMAND_LIST_FORMAT = NOTEBOOK_EM.ON .. "- " .. NOTEBOOK_EM.OFF .. "%s " .. NOTEBOOK_EM.ON .. "(%d characters, by %s, %s)" .. NOTEBOOK_EM.OFF,
-	COMMAND_STATUS_FORMAT = NOTEBOOK_EM.ON .. "Notebook currently contains %d notes and is using %.0fkB of memory" .. NOTEBOOK_EM.OFF,
+	COMMAND_DEBUGON_CONFIRM = "Notebook debugging is enabled.",
+	COMMAND_DEBUGOFF_CONFIRM = "Notebook debugging is disabled.",
+	COMMAND_LIST_CONFIRM = "Notebook contains the following notes:",
+	COMMAND_LIST_FORMAT = "- %s (%d characters, by %s, %s)",
+	COMMAND_STATUS_FORMAT = "Notebook currently contains %d notes and is using %.0fkB of memory.",
 
 	-- Error messages
-	ERROR_RENAME_NOT_UNIQUE_FORMAT = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "You already have a note titled \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" (titles must be unique)" .. NOTEBOOK_EM.OFF,
-	ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "You cannot have an empty title" .. NOTEBOOK_EM.OFF,
+	ERROR_RENAME_NOT_UNIQUE_FORMAT = "You already have a note titled %q. Titles must be unique.",
+	ERROR_RENAME_EMPTY = "You cannot have an empty title.",
+	ERROR_SEND_COOLDOWN = "You cannot send another note just yet.",
+	ERROR_SEND_INVALID = "You must provide a valid note title and channel.",
+	ERROR_SEND_INVALID_NOTE = "Could not find a note titled %q.",
+	ERROR_SEND_EDITING = "You cannot send a note with unsaved changes.",
+	ERROR_SEND_RAID_LEADER = "You are not the raid leader or assistant.",
+	ERROR_SEND_NO_NAME = "You must enter a character name or BattleTag.",
+	ERROR_SEND_NO_CHANNEL = "You must enter a channel name.",
+	ERROR_SEND_INVALID_CHANNEL = "Could not find a channel %s.",
+	ERROR_SEND_UNKNOWN_CHANNEL = "%q is not a supported channel type.",
 }
 
 ------------------------------------------------------------------------
 -- Help text
 local NOTEBOOK_HELP = {
 	"Use /notebook or /note with the following commands:",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_SHOW .. NOTEBOOK_EM.OFF .. " shows Notebook",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_HIDE .. NOTEBOOK_EM.OFF .. " hides Notebook",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_STATUS .. NOTEBOOK_EM.OFF .. " reports the status of Notebook",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_LIST .. NOTEBOOK_EM.OFF .. " lists the notes in your Notebook",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. NOTEBOOK_EM.OFF .. " restores the Welcome note",
-	"   " .. NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_HELP .. NOTEBOOK_EM.OFF .. " shows this help message",
+	"   " .. NOTEBOOK_COMMANDS.COMMAND_SHOW .. " - show Notebook",
+	"   " .. NOTEBOOK_COMMANDS.COMMAND_HIDE .. " - hide Notebook",
+	"   " .. NOTEBOOK_COMMANDS.COMMAND_STATUS .. " - report the status of Notebook",
+	"   " .. NOTEBOOK_COMMANDS.COMMAND_LIST .. " - list the notes in your Notebook",
+	"   " .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. " - restore the Welcome note",
+	"   " .. NOTEBOOK_COMMANDS.COMMAND_HELP .. " - show this help message",
 	"Use the slash command without any additional commands, or bind a key in the Key Bindings menu, to toggle the Notebook window.",
 }
 

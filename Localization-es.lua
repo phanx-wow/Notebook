@@ -9,7 +9,6 @@
 --	Traducción al español por Phanx
 if not GetLocale():match("^es") then return end
 local NOTEBOOK, Notebook = ...
-local NOTEBOOK_EM = Notebook.NOTEBOOK_EM
 
 BINDING_NAME_NOTEBOOK_PANEL = "Mostrar/ocultar Notebook"
 
@@ -66,11 +65,11 @@ T.CHANNEL_NAME_FORMAT = "%d. %s"
 
 T.ENTER_PLAYER_NAME_TEXT = "Escribe el nombre del jugardor al que enviar:"
 T.ENTER_NEW_TITLE_TEXT = "Escribe un nuevo título para esta nota:"
-T.CONFIRM_REMOVE_FORMAT = "¿Seguro que desea borrar \"%s\"?"
-T.CONFIRM_UPDATE_FORMAT = "¿Seguro que desea reemplazar \"%s\" con la versión de %s?"
-T.CONFIRM_SERVER_CHANNEL_FORMAT = "¿Seguro que desea enviar \"%s\" al canal %s?"
+T.CONFIRM_REMOVE_FORMAT = "¿Seguro que desea borrar %q?"
+T.CONFIRM_UPDATE_FORMAT = "¿Seguro que desea reemplazar %q con la versión de %s?"
+T.CONFIRM_SERVER_CHANNEL_FORMAT = "¿Seguro que desea enviar %q al canal %s?"
 
-T.NOTE_RECEIVED_FORMAT = NOTEBOOK_EM.ON .. "Notebook añadió nota \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" de " .. NOTEBOOK_EM.OFF .. "%s"
+T.NOTE_RECEIVED_FORMAT = "Notebook añadió nota %q de %s."
 
 ------------------------------------------------------------------------
 -- Slash commands and responses
@@ -90,13 +89,22 @@ C.COMMAND_STATUS = "estado"
 -- Slash command responses
 C.COMMAND_DEBUGON_CONFIRM = "Depuración de Notebook está activada."
 C.COMMAND_DEBUGOFF_CONFIRM = "Depuración de Notebook está desactivada."
-C.COMMAND_LIST_CONFIRM = NOTEBOOK_EM.ON .. "Notebook contiene las siguientes notas:" .. NOTEBOOK_EM.OFF
-C.COMMAND_LIST_FORMAT = NOTEBOOK_EM.ON .. "- " .. NOTEBOOK_EM.OFF .. "%s " .. NOTEBOOK_EM.ON .. "(%d caracteres, de %s, %s)" .. NOTEBOOK_EM.OFF
-C.COMMAND_STATUS_FORMAT = NOTEBOOK_EM.ON .. "Notebook contiene %d notas y se utiliza %.0fkB de memoria" .. NOTEBOOK_EM.OFF
+C.COMMAND_LIST_CONFIRM = "Notebook contiene las siguientes notas:"
+C.COMMAND_LIST_FORMAT = "- %s (%d caracteres, de %s, %s)"
+C.COMMAND_STATUS_FORMAT = "Notebook contiene %d notas y se utiliza %.0fkB de memoria."
 
 -- Error messages
-C.ERROR_RENAME_NOT_UNIQUE_FORMAT = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "Ya tienes una nota titulado \"" .. NOTEBOOK_EM.OFF .. "%s" .. NOTEBOOK_EM.ON .. "\" (títulos deben ser únicos)" .. NOTEBOOK_EM.OFF
-C.ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "Títulos no pueden estar vacíos." .. NOTEBOOK_EM.OFF
+C.ERROR_RENAME_NOT_UNIQUE_FORMAT = "Ya tienes una nota titulado %q. Títulos deben ser únicos."
+C.ERROR_RENAME_EMPTY = "Títulos no pueden estar vacíos."
+C.ERROR_SEND_COOLDOWN = "No puedes enviar otra nota todavía."
+C.ERROR_SEND_INVALID = "Debes introducir un título y un canal valido."
+C.ERROR_SEND_INVALID_NOTE = "No se puede encontrar una nota %q."
+C.ERROR_SEND_EDITING = "No puedes enviar una nota con cambios sin guardar."
+C.ERROR_SEND_RAID_LEADER = "No estás el líder o un asistente de la banda."
+C.ERROR_SEND_NO_NAME = "Debes indroducir un nombre de personaje o un BattleTag."
+C.ERROR_SEND_NO_CHANNEL = "Debes introducir un nombre de canal."
+C.ERROR_SEND_INVALID_CHANNEL = "No se puede encontrar un canal %s."
+C.ERROR_SEND_UNKNOWN_CHANNEL = "%q no es un tipo compatible de canal."
 
 ------------------------------------------------------------------------
 -- Help text
@@ -104,21 +112,21 @@ C.ERROR_RENAME_EMPTY = NOTEBOOK_TEXT.ERROR .. NOTEBOOK_EM.ON .. "Títulos no pue
 Notebook.NOTEBOOK_SLASH = "/cuaderno"
 
 Notebook.NOTEBOOK_HELP = {
-	"Utilizar /notebook, /note, o "  ..  Notebook.NOTEBOOK_SLASH  ..  " con los siguientes comandos:",
-	NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_SHOW .. NOTEBOOK_EM.OFF .. " - muestra Notebook",
-	NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_HIDE .. NOTEBOOK_EM.OFF .. " oculta Notebook",
-	NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_STATUS .. NOTEBOOK_EM.OFF .. " - le informa el estado de Notebook",
-	NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_LIST .. NOTEBOOK_EM.OFF .. " - enumera las notas en su Notebook",
-	NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. NOTEBOOK_EM.OFF .. " - restaura la nota Bienvenida",
-	NOTEBOOK_EM.ON .. NOTEBOOK_COMMANDS.COMMAND_HELP .. NOTEBOOK_EM.OFF .. " - muestra este ayuda",
+	"Utilizar " ..  Notebook.NOTEBOOK_SLASH  ..  ", /notebook o /note con los siguientes comandos:",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_SHOW    .. " - mostrar Notebook",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_HIDE    .. " - ocultar Notebook",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_STATUS  .. " - informarle el estado de Notebook",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_LIST    .. " - enumerar las notas en su Notebook",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. " - restaurar la nota Bienvenida",
+	"- " .. NOTEBOOK_COMMANDS.COMMAND_HELP    .. " - mostrar este ayuda",
 	"Utilizarlo sin comando para mostrar o ocultar Notebook, o asignar una tecla.",
 }
 
 ------------------------------------------------------------------------
 --	First timer's brief manual
 
-Notebook.NOTEBOOK_FIRST_TIME_NOTE["title"] = "Bienvenido a Notebook!"
-Notebook.NOTEBOOK_FIRST_TIME_NOTE["description"] = [[Notebook te permite escribar y guardar notas sobre diversos temas, y compartirlas con tus amigos, tu grupo, tu hermandad, y los canales de chat! Si normalmente utiliza macros para dar instrucciones al grupo, explicar explicar las reglas de saqueo, recordar listas de encantamientos, o propósitos similares -- Notebook puede ser útil para ti!
+Notebook.NOTEBOOK_FIRST_TIME_NOTE.title = "Bienvenido a Notebook!"
+Notebook.NOTEBOOK_FIRST_TIME_NOTE.description = [[Notebook te permite escribar y guardar notas sobre diversos temas, y compartirlas con tus amigos, tu grupo, tu hermandad, y los canales de chat! Si normalmente utiliza macros para dar instrucciones al grupo, explicar explicar las reglas de saqueo, recordar listas de encantamientos, o propósitos similares -- Notebook puede ser útil para ti!
 
 Para crearon una nueva nota, sólo clic en la boton "Crear" y escriba un título para la nota. Títulos pueden tener hasta 60 caracteres de largo, y pueden incluyir cualqier carácter. Pero, cada título tiene que ser único -- no puedes tener dos notas con el mismo título.
 
