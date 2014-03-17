@@ -8,15 +8,16 @@
 ----------------------------------------------------------------------]]
 
 local NOTEBOOK, Notebook = ...
+local L = Notebook.L
+local HELP_TEXT = Notebook.HELP_TEXT
+
+Notebook.name = GetAddOnMetadata(NOTEBOOK, "Title")
+Notebook.description = GetAddOnMetadata(NOTEBOOK, "Notes")
+Notebook.version = GetAddOnMetadata(NOTEBOOK, "Version")
+
+BINDING_HEADER_NOTEBOOK_TITLE = Notebook.name
+
 NotebookState = {}
-
-local TXT = Notebook.NOTEBOOK_TEXT
-local CMD = Notebook.NOTEBOOK_COMMANDS
-local NOTEBOOK_HELP = Notebook.NOTEBOOK_HELP
-local NOTEBOOK_FIRST_TIME_NOTE = Notebook.NOTEBOOK_FIRST_TIME_NOTE
-
-local DEBUG_PREFIX = NORMAL_FONT_COLOR_CODE .. Notebook.name .. ":|r "
-local ERROR_PREFIX = RED_FONT_COLOR_CODE .. Notebook.name .. ":|r "
 
 ------------------------------------------------------------------------
 --	Global constants
@@ -32,7 +33,7 @@ local NOTEBOOK_CHANNEL_VALUE_FIND = "(.+):(%d+):(.+)"
 local NOTEBOOK_MAX_LINE_LENGTH = 80			-- maximum characters in one line
 local NOTEBOOK_MAX_NUM_LINES = 64			-- maximum number of lines sent from a note
 local NOTEBOOK_NEW_LINE = "\n"				-- newline character
-local NOTEBOOK_GETDATE_FORMAT = "%y%m%d"	-- see strftime
+local NOTEBOOK_GETDATE_FORMAT = "%y-%m-%d"	-- see strftime
 
 local NOTEBOOK_SEND_PREFIX = "\032"			-- used to indicate start of a sent line (a non-printing character)
 local NOTEBOOK_SEND_POSTFIX = "\032"		-- used to indicate where lines join (a non-printing character)
@@ -86,7 +87,7 @@ local _notesCount = 0			-- count of how many notes are in notesList
 local _notesLastID = 0			-- last note ID used
 local _filteredList = {}		-- filtered list of notes, contains indices into notesList
 local _filteredCount = 0
-local _filterBy = TXT.ALL_TAB
+local _filterBy = L.ALL_TAB
 
 local _sendInProgress			-- set when sending a message to someone (nil otherwise)
 local _sendCooldownTimer		-- set to time to send next line or to allow next send (nil if not used)
@@ -117,21 +118,26 @@ local _addSavedToRecent = true		-- false means that only sent and received notes
 --	First timer's brief manual
 ------------------------------------------------------------------------
 
-local _firstTimeNote = NOTEBOOK_FIRST_TIME_NOTE
+local _firstTimeNote = {
+	title = L.WELCOME_NOTE_TITLE,
+	description = L.WELCOME_NOTE_DESCRIPTION,
+	author = "Cirk",
+	date = "051224",
+}
 
 ------------------------------------------------------------------------
 --	Popup defines (see Blizzard's StaticPopup.lua)
 ------------------------------------------------------------------------
 
 StaticPopupDialogs["NOTEBOOK_SEND_TO_PLAYER"] = {
-	text = TXT.ENTER_PLAYER_NAME_TEXT,
+	text = L.ENTER_PLAYER_NAME_TEXT,
 	button1 = ACCEPT,
 	button2 = CANCEL,
 	hasEditBox = 1,
 	maxLetters = 32,
 	OnShow = function(self)
 		local editBox = self.editBox or _G[self:GetName() .. "EditBox"]
-		editBox:SetText(Notebook.GetPopupData("PLAYER"))
+		editBox:SetText(Notebook:GetPopupData("PLAYER"))
 		editBox:HighlightText()
 		editBox:SetFocus()
 		NotebookFrame.NewButton:Disable()
@@ -144,10 +150,10 @@ StaticPopupDialogs["NOTEBOOK_SEND_TO_PLAYER"] = {
 	end,
 	OnAccept = function(self, data)
 		local editBox = self.editBox or _G[self:GetName() .. "EditBox"]
-		Notebook.HandlePopupAccept("PLAYER", data, editBox:GetText())
+		Notebook:HandlePopupInput("PLAYER", data, editBox:GetText())
 	end,
 	EditBoxOnEnterPressed = function(self, data)
-		Notebook.HandlePopupAccept("PLAYER", data, self:GetText())
+		Notebook:HandlePopupInput("PLAYER", data, self:GetText())
 		self:GetParent():Hide()
 	end,
 	EditBoxOnEscapePressed = function(self)
@@ -160,14 +166,14 @@ StaticPopupDialogs["NOTEBOOK_SEND_TO_PLAYER"] = {
 }
 
 StaticPopupDialogs["NOTEBOOK_NEW_TITLE"] = {
-	text = TXT.ENTER_NEW_TITLE_TEXT,
+	text = L.ENTER_NEW_TITLE_TEXT,
 	button1 = ACCEPT,
 	button2 = CANCEL,
 	hasEditBox = 1,
 	maxLetters = 60,
 	OnShow = function(self)
 		local editBox = self.editBox or _G[self:GetName() .. "WideEditBox"]
-		editBox:SetText(Notebook.GetPopupData("TITLE"))
+		editBox:SetText(Notebook:GetPopupData("TITLE"))
 		editBox:HighlightText()
 		editBox:SetFocus()
 		NotebookFrame.NewButton:Disable()
@@ -180,10 +186,10 @@ StaticPopupDialogs["NOTEBOOK_NEW_TITLE"] = {
 	end,
 	OnAccept = function(self, data)
 		local editBox = self.editBox or _G[self:GetName() .. "EditBox"]
-		Notebook.HandlePopupAccept("TITLE", data, editBox:GetText())
+		Notebook:HandlePopupInput("TITLE", data, editBox:GetText())
 	end,
 	EditBoxOnEnterPressed = function(self, data)
-		Notebook.HandlePopupAccept("TITLE", data, self:GetText())
+		Notebook:HandlePopupInput("TITLE", data, self:GetText())
 		self:GetParent():Hide()
 	end,
 	EditBoxOnEscapePressed = function(self)
@@ -196,12 +202,12 @@ StaticPopupDialogs["NOTEBOOK_NEW_TITLE"] = {
 }
 
 StaticPopupDialogs["NOTEBOOK_REMOVE_CONFIRM"] = {
-	text = TXT.CONFIRM_REMOVE_FORMAT,
+	text = L.CONFIRM_REMOVE_FORMAT,
 	button1 = YES,
 	button2 = NO,
 	sound = "igCharacterInfoOpen",
 	OnAccept = function(self, data)
-		Notebook.HandlePopupAccept("CONFIRM", data)
+		Notebook:HandlePopupInput("CONFIRM", data)
 	end,
 	timeout = 60,
 	exclusive = 1,
@@ -211,12 +217,12 @@ StaticPopupDialogs["NOTEBOOK_REMOVE_CONFIRM"] = {
 }
 
 StaticPopupDialogs["NOTEBOOK_UPDATE_CONFIRM"] = {
-	text = TXT.CONFIRM_UPDATE_FORMAT,
+	text = L.CONFIRM_UPDATE_FORMAT,
 	button1 = YES,
 	button2 = NO,
 	sound = "igCharacterInfoOpen",
 	OnAccept = function(self, data)
-		Notebook.HandlePopupAccept("UPDATE", data)
+		Notebook:HandlePopupInput("UPDATE", data)
 	end,
 	timeout = 60,
 	exclusive = 1,
@@ -226,12 +232,12 @@ StaticPopupDialogs["NOTEBOOK_UPDATE_CONFIRM"] = {
 }
 
 StaticPopupDialogs["NOTEBOOK_SERVER_CONFIRM"] = {
-	text = TXT.CONFIRM_SERVER_CHANNEL_FORMAT,
+	text = L.CONFIRM_SERVER_CHANNEL_FORMAT,
 	button1 = YES,
 	button2 = NO,
 	sound = "igCharacterInfoOpen",
 	OnAccept = function(self, data)
-		Notebook.HandlePopupAccept("SERVER", data)
+		Notebook:HandlePopupInput("SERVER", data)
 	end,
 	timeout = 60,
 	exclusive = 1,
@@ -244,21 +250,60 @@ StaticPopupDialogs["NOTEBOOK_SERVER_CONFIRM"] = {
 --	Local functions
 ------------------------------------------------------------------------
 
-function Notebook.UnpackDate(packedDate)
+local PRINT_PREFIX = NORMAL_FONT_COLOR_CODE .. Notebook.name .. ":|r "
+local ERROR_PREFIX = "|cffff7f7f" .. Notebook.name .. ":|r "
+local DEBUG_PREFIX = "|cff7fff7f" .. NOTEBOOK .. ":|r "
+
+function Notebook:Print(str, noPrefix)
+	DEFAULT_CHAT_FRAME:AddMessage((noPrefix and "   " or PRINT_PREFIX) .. str)
+end
+
+function Notebook:Error(str)
+	DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. str)
+end
+
+function Notebook:Debug(str)
+	if not _debugFrame then return end
+	_debugFrame:AddMessage(DEBUG_PREFIX .. str)
+end
+
+------------------------------------------------------------------------
+
+local MONTH_NAMES = {
+	["01"] = FULLDATE_MONTH_JANUARY,
+	["02"] = FULLDATE_MONTH_FEBRUARY,
+	["03"] = FULLDATE_MONTH_MARCH,
+	["04"] = FULLDATE_MONTH_APRIL,
+	["05"] = FULLDATE_MONTH_MAY,
+	["06"] = FULLDATE_MONTH_JUNE,
+	["07"] = FULLDATE_MONTH_JULY,
+	["08"] = FULLDATE_MONTH_AUGUST,
+	["09"] = FULLDATE_MONTH_SEPTEMBER,
+	["10"] = FULLDATE_MONTH_OCTOBER,
+	["11"] = FULLDATE_MONTH_NOVEMBER,
+	["12"] = FULLDATE_MONTH_DECEMBER,
+}
+
+function Notebook:GetDateText(packedDate)
 	-- Notebook uses a date format of yymmdd, returned automatically by
 	-- calling date("%y%m%d"), however we unpack this into a more human
 	-- readable form.
-	local year, month, day = strmatch(packedDate, "(%d%d)(%d%d)(%d%d)")
-	return format("%s %s 20%s", day, TXT["MONTHNAME_"..month], year)
+	-- local year, month, day = strmatch(packedDate, "(%d%d)(%d%d)(%d%d)")
+	local year, month, day = strsplit("-", packedDate)
+	return format("%s %s 20%s", day, MONTH_NAMES[month], year)
 end
 
-function Notebook.GenerateSignature(text, numLines)
-	-- Generates a "secret" signature version of the provided text string that
-	-- notebook can automatically recognize.
+------------------------------------------------------------------------
+
+function Notebook:GenerateSignature(text, numLines)
+	-- Generates a "secret" signature version of the provided text string
+	-- that other Notebooks can automatically recognize.
 	return NOTEBOOK_HEADER_PRE .. text .. NOTEBOOK_HEADER_POST .. strrep(NOTEBOOK_HEADER_LINECOUNT_CHAR, numLines)
 end
 
-function Notebook.Reset()
+------------------------------------------------------------------------
+
+function Notebook:Reset()
 	-- Resets the Notebook back to empty
 	_notesList = {}
 	_filteredList = {}
@@ -267,7 +312,7 @@ function Notebook.Reset()
 	_notesLastID = 0
 end
 
-function Notebook.SaveData()
+function Notebook:SaveData()
 	-- Saves the currently known entries in the Notebook (not-known are not saved)
 	local notes = {}
 	for i = 1, #_notesList do
@@ -299,15 +344,22 @@ function Notebook.SaveData()
 	NotebookState.Servers = nil
 end
 
-function Notebook.LoadOneNote(title, ndata)
+function Notebook:LoadOneNote(title, ndata)
 	-- Given a saved note defined by a title and by ndata, this function
 	-- creates a note structure for use in-memory.  The _notesLastID value is
 	-- also automatically incremented to form the note's id value
-	local newNote = {}
-	newNote.title = title
-	newNote.author = ndata.author
-	newNote.date = ndata.date
-	newNote.sent = ndata.sent
+	local newNote = {
+		title = title,
+		author = ndata.author,
+		date = ndata.date,
+		sent = ndata.sent,
+		known = true,
+	}
+	if not strfind(ndata.date, "%-") then
+		-- @PHANX, 15 Mar 2014, upgrade old date storage format
+		local y, m, d = strmatch(ndata.date, "(%d%d)(%d%d)(%d%d)")
+		newNote.date = strjoin("-", y, m, d)
+	end
 	if type(ndata.description) == "string" then
 		newNote.description = ndata.description
 	else
@@ -318,7 +370,6 @@ function Notebook.LoadOneNote(title, ndata)
 			end
 		end
 	end
-	newNote.known = true
 	if ndata.send then
 		newNote.send = true
 	end
@@ -327,15 +378,15 @@ function Notebook.LoadOneNote(title, ndata)
 	return newNote
 end
 
-function Notebook.LoadData()
+function Notebook:LoadData()
 	-- Loads all the notes from the current saved variables file.  This
 	-- function implements code to read the previous save file format (where
 	-- notes were saved per server) and handles notes with the same name from
 	-- different servers by appending the server name.
-	Notebook.Reset()
+	Notebook:Reset()
 	for entry, ndata in pairs(NotebookState.Notes) do
 		_notesCount = _notesCount + 1
-		_notesList[_notesCount] = Notebook.LoadOneNote(entry, ndata)
+		_notesList[_notesCount] = Notebook:LoadOneNote(entry, ndata)
 	end
 	if NotebookState.Servers then
 		for server, sdata in pairs(NotebookState.Servers) do
@@ -353,7 +404,7 @@ function Notebook.LoadData()
 						end
 					until not found
 					_notesCount = _notesCount + 1
-					_notesList[_notesCount] = Notebook.LoadOneNote(title, ndata)
+					_notesList[_notesCount] = Notebook:LoadOneNote(title, ndata)
 				end
 			end
 		end
@@ -363,14 +414,12 @@ function Notebook.LoadData()
 	end
 end
 
-function Notebook.CalculateChecksum(string)
-	if _debugFrame then
-		_debugFrame:AddMessage(DEBUG_PREFIX .. "Notebook.CalculateChecksum is still TO DO")
-	end
+function Notebook:CalculateChecksum(string)
+	Notebook:Debug("Notebook:CalculateChecksum is still TO DO")
 	return 0
 end
 
-function Notebook.FindByTitle(title, known)
+function Notebook:FindByTitle(title, known)
 	-- Returns the entry of the note with the matching title or nil if not found.  If known is true then only known entries are checked.
 	if known then
 		for i = 1, #_notesList do
@@ -390,7 +439,7 @@ function Notebook.FindByTitle(title, known)
 	return nil
 end
 
-function Notebook.FindByID(id)
+function Notebook:FindByID(id)
 	-- Returns the entry with the matching id, or nil if not found
 	if id then
 		for i = 1, #_notesList do
@@ -403,7 +452,7 @@ function Notebook.FindByID(id)
 	return nil
 end
 
-function Notebook.Add(title, author, date, description, known, recent, send)
+function Notebook:AddNote(title, author, date, description, known, recent, send)
 	-- Adds a new entry to the notebook.  Note that it is the callers
 	-- responsibility to make sure the title is valid and unique!  The
 	-- function then returns the newly added note entry.
@@ -423,7 +472,7 @@ function Notebook.Add(title, author, date, description, known, recent, send)
 	return newNote
 end
 
-function Notebook.RemoveByID(id)
+function Notebook:RemoveNoteByID(id)
 	-- Removes (deletes) the note with the indicated id from the list.  Note
 	-- that it appears that sometimes tremove does not work properly (or
 	-- at least reliably), at least when the index being removed is not the
@@ -441,7 +490,7 @@ function Notebook.RemoveByID(id)
 	_notesList = newList
 end
 
-function Notebook.Rename(ndata, title)
+function Notebook:Rename(ndata, title)
 	-- Renames the indicated note entry with the given title.  It is the
 	-- caller's responsibility to ensure that the new title is valid and
 	-- unique.
@@ -451,7 +500,7 @@ function Notebook.Rename(ndata, title)
 	end
 end
 
-function Notebook.UpdateDescription(ndata, description)
+function Notebook:UpdateDescription(ndata, description)
 	-- Updates the description in the note, and also sets the author (to the
 	-- player) and date (to the current server date).
 	ndata.description = description
@@ -462,7 +511,7 @@ function Notebook.UpdateDescription(ndata, description)
 	end
 end
 
-function Notebook.CompareDescription(desc1, desc2)
+function Notebook:CompareDescription(desc1, desc2)
 	-- Does a simple compare on the two passed descriptions to see if they are
 	-- equal (or close enough to equal) by converting all whitespace sequences
 	-- in the descriptions to single spaces.  If the two strings are then
@@ -488,10 +537,10 @@ function Notebook.CompareOnTitle(index1, index2)
 	return _notesList[index1].title < _notesList[index2].title
 end
 
-function Notebook.FilterList()
+function Notebook:FilterList()
 	_filteredList = {}
 	_filteredCount = 0
-	if _filterBy == TXT.KNOWN_TAB then
+	if _filterBy == L.KNOWN_TAB then
 		for i = 1, #_notesList do
 			local ndata = _notesList[i]
 			if ndata.known then
@@ -499,7 +548,7 @@ function Notebook.FilterList()
 				_filteredList[_filteredCount] = i
 			end
 		end
-	elseif _filterBy == TXT.MINE_TAB then
+	elseif _filterBy == L.MINE_TAB then
 		for i = 1, #_notesList do
 			local ndata = _notesList[i]
 			if ndata.author == _playerName then
@@ -507,7 +556,7 @@ function Notebook.FilterList()
 				_filteredList[_filteredCount] = i
 			end
 		end
-	elseif _filterBy == TXT.RECENT_TAB then
+	elseif _filterBy == L.RECENT_TAB then
 		for i = 1, #_notesList do
 			local ndata = _notesList[i]
 			if ndata.recent then
@@ -524,7 +573,7 @@ function Notebook.FilterList()
 	sort(_filteredList, Notebook.CompareOnTitle)
 end
 
-function Notebook.UpdateNotKnown(removeTitle)
+function Notebook:UpdateNotKnown(removeTitle)
 	-- This function looks through all the notes currently not known, and
 	-- determines whether they should be flagged for adding or for updating.
 	-- If a note that is not-known is identical (title and description) to a
@@ -540,9 +589,9 @@ function Notebook.UpdateNotKnown(removeTitle)
 			if ndata.title == removeTitle then
 				tinsert(removeList, ndata.id)
 			else
-				local pdata = Notebook.FindByTitle(ndata.title, true)
+				local pdata = Notebook:FindByTitle(ndata.title, true)
 				if pdata then
-					if Notebook.CompareDescription(pdata.description, ndata.description) then
+					if Notebook:CompareDescription(pdata.description, ndata.description) then
 						if ndata.recent then
 							pdata.recent = true
 						end
@@ -557,11 +606,11 @@ function Notebook.UpdateNotKnown(removeTitle)
 		end
 	end
 	for i = 1, #removeList do
-		Notebook.RemoveByID(removeList[i])
+		Notebook:RemoveNoteByID(removeList[i])
 	end
 end
 
-function Notebook.ConvertToLines(text, maxLines, debug)
+function Notebook:ConvertToLines(text, maxLines, debug)
 	-- Given a text string, this function converts it into a line-formatted
 	-- table, suitable for sending to a target channel.  The formatting
 	-- enforces a maximum per-line length of NOTEBOOK_MAX_NUM_LINES (with
@@ -631,9 +680,7 @@ function Notebook.ConvertToLines(text, maxLines, debug)
 		if maxLines and numLines > maxLines then
 			-- We wait until we get numLines greater than maxLines to allow
 			-- for trailing "empty" lines to not show as an error.
-			if debug then
-				_debugFrame:AddMessage(DEBUG_PREFIX .. "--> limiting number of lines to " .. maxLines)
-			end
+			Notebook:Debug("--> limiting number of lines to " .. maxLines)
 			lines[numLines] = nil
 			numLines = maxLines
 			break
@@ -647,26 +694,23 @@ function Notebook.ConvertToLines(text, maxLines, debug)
 	return lines, numLines
 end
 
-function Notebook.SendNote(ndata, channel, target)
-	--print("SendNote", ndata.title, channel, target)
+function Notebook:SendNote(ndata, channel, target)
 	-- Formats the provided note to be sent using the indicated channel and
 	-- target (if needed).  Note that the actual sending of all text lines
 	-- (apart from the title dois done via timer in OnUpdate.
-	if _debugFrame then
-		if target then
-			_debugFrame:AddMessage(DEBUG_PREFIX .. "Notebook.SendNote(" .. ndata.title .. ", " .. channel .. ", " .. target .. ")")
-		else
-			_debugFrame:AddMessage(DEBUG_PREFIX .. "Notebook.SendNote(" .. ndata.title .. ", " .. channel .. ")")
-		end
+	if target then
+		Notebook:Debug("SendNote: " .. ndata.title .. ", " .. channel .. ", " .. target)
+	else
+		Notebook:Debug("SendNote: " .. ndata.title .. ", " .. channel)
 	end
 	-- Convert into lines table for sending
-	local lines, numLines = Notebook.ConvertToLines(ndata.description, NOTEBOOK_MAX_NUM_LINES, _debugFrame)
+	local lines, numLines = Notebook:ConvertToLines(ndata.description, NOTEBOOK_MAX_NUM_LINES, _debugFrame)
 	-- Format title string with our "secret" notebook code for any other
 	-- notebooks to recognize.
 	if channel == "BN_WHISPER" then
-		BNSendWhisper(target, Notebook.GenerateSignature(ndata.title, numLines))
+		BNSendWhisper(target, Notebook:GenerateSignature(ndata.title, numLines))
 	else
-		SendChatMessage(Notebook.GenerateSignature(ndata.title, numLines), channel, nil, target)
+		SendChatMessage(Notebook:GenerateSignature(ndata.title, numLines), channel, nil, target)
 	end
 	if numLines > 0 then
 		_sendInProgress = true
@@ -682,7 +726,7 @@ function Notebook.SendNote(ndata, channel, target)
 	-- Update the sent date
 	ndata.sent = date(NOTEBOOK_GETDATE_FORMAT)
 	-- Update the displayed list
-	Notebook.FilterList()
+	Notebook:FilterList()
 	Notebook.Frame_UpdateList()
 end
 
@@ -690,15 +734,15 @@ end
 --	Chat event parsing functions
 ------------------------------------------------------------------------
 
-function Notebook.ChatMessageHandler(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14)
+function Notebook:ProcessChatMessage(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14)
 	-- Called for raid, party, guild, whisper, and channel events.  Note that
 	-- system channels (e.g., General, Trade, etc.) are indicated by arg7
 	-- being non-zero, and are always ignored.  Similarly anything sent by
 	-- ourselves should also be ignored.
-	local channel = strsub(event, 10)
 	if arg2 == _playerName or tonumber(arg7) ~= 0 then
 		return
 	end
+	local channel = strsub(event, 10)
 	if not _receiveInProgress then
 		local _, _, title, countString = strfind(arg1, NOTEBOOK_HEADER_PATTERN)
 		if title and countString then
@@ -712,16 +756,14 @@ function Notebook.ChatMessageHandler(event, arg1, arg2, arg3, arg4, arg5, arg6, 
 				_receiveLinesExpected = lineCount
 				_receiveLines = {}
 				_receiveTitle = title
-				NotebookFrame:SetScript("OnUpdate", Notebook.Frame_OnUpdate)
+				NotebookFrame:SetScript("OnUpdate", self.Frame_OnUpdate)
 			end
 		end
 	elseif arg2 == _receiveSender and _receiveChannel == channel and _receiveTarget == arg8 then
 		if strsub(arg1, 1, 1) == NOTEBOOK_SEND_PREFIX then
 			tinsert(_receiveLines, strsub(arg1, 2))
 			if #_receiveLines == _receiveLinesExpected then
-				if _debugFrame then
-					_debugFrame:AddMessage(DEBUG_PREFIX .. "Received note \"" .. _receiveTitle .. "\" from " .. _receiveSender)
-				end
+				self:Debug("Received note \"" .. _receiveTitle .. "\" from " .. _receiveSender)
 				_receiveInProgress = nil
 				_receiveTimer = nil
 				description = ""
@@ -739,7 +781,7 @@ function Notebook.ChatMessageHandler(event, arg1, arg2, arg3, arg4, arg5, arg6, 
 				for i = 1, #_notesList do
 					local text = _notesList[i]
 					if ndata.title == _receiveTitle then
-						if Notebook.CompareDescription(ndata.description, description) then
+						if self:CompareDescription(ndata.description, description) then
 							-- Same note already exists, so don't add it again
 							ndata.recent = true
 							addNote = nil
@@ -748,11 +790,11 @@ function Notebook.ChatMessageHandler(event, arg1, arg2, arg3, arg4, arg5, arg6, 
 					end
 				end
 				if addNote then
-					DEFAULT_CHAT_FRAME:AddMessage(format(TXT.NOTE_RECEIVED_FORMAT, _receiveTitle, _receiveSender))
-					Notebook.Add(_receiveTitle, _receiveSender, date(NOTEBOOK_GETDATE_FORMAT), description, false, true, true)
+					self:Print(format(L.NOTE_RECEIVED_FORMAT, _receiveTitle, _receiveSender))
+					Notebook:AddNote(_receiveTitle, _receiveSender, date(NOTEBOOK_GETDATE_FORMAT), description, false, true, true)
 				end
-				Notebook.UpdateNotKnown()
-				Notebook.FilterList()
+				Notebook:UpdateNotKnown()
+				Notebook:FilterList()
 				Notebook.Frame_UpdateList()
 			end
 		end
@@ -763,7 +805,7 @@ end
 --	Initialization functions
 ------------------------------------------------------------------------
 
-function Notebook.ADDON_LOADED(addon)
+function Notebook:ADDON_LOADED(addon)
 	if addon ~= NOTEBOOK then return end
 	NotebookFrame:UnregisterEvent("ADDON_LOADED")
 
@@ -777,19 +819,19 @@ function Notebook.ADDON_LOADED(addon)
 	_notesList = NotebookState.Notes
 
 	if IsLoggedIn() then
-		Notebook.PLAYER_LOGIN()
+		Notebook:PLAYER_LOGIN()
 	end
 end
 
-function Notebook.PLAYER_LOGIN()
+function Notebook:PLAYER_LOGIN()
 	NotebookFrame:UnregisterEvent("PLAYER_LOGIN")
 
 	-- Load notes
-	Notebook.LoadData()
+	Notebook:LoadData()
 	if _firstTimeLoad then
-		Notebook.Add(_firstTimeNote.title, _firstTimeNote.author, _firstTimeNote.date, _firstTimeNote.description, true, false, false)
+		Notebook:AddNote(_firstTimeNote.title, _firstTimeNote.author, _firstTimeNote.date, _firstTimeNote.description, true, false, false)
 	end
-	Notebook.FilterList()
+	Notebook:FilterList()
 	Notebook.Frame_UpdateList()
 
 	-- Register for required events now
@@ -817,8 +859,8 @@ function Notebook.PLAYER_LOGIN()
 --	end
 end
 
-function Notebook.PLAYER_LOGOUT()
-	Notebook.SaveData()
+function Notebook:PLAYER_LOGOUT()
+	Notebook:SaveData()
 end
 
 ------------------------------------------------------------------------
@@ -904,31 +946,31 @@ function Notebook.Frame_UpdateButtons(editing, known, update)
 	-- based on whether the current entry is known, being edited, etc.
 	if editing then
 		NotebookFrame.SaveButton:Enable()
-		NotebookFrame.SaveButton:SetScript( "OnClick", Notebook.Frame_SaveButtonOnClick )
-		NotebookFrame.SaveButton:SetText( TXT.SAVE_BUTTON )
-		NotebookFrame.SaveButton.tooltipText = TXT.SAVE_BUTTON_TOOLTIP
-		NotebookFrame.SaveButton.newbieText = TXT.SAVE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton:SetScript("OnClick", Notebook.Frame_SaveButtonOnClick)
+		NotebookFrame.SaveButton:SetText(L.SAVE_BUTTON)
+		NotebookFrame.SaveButton.tooltipText = L.SAVE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton.newbieText = L.SAVE_BUTTON_TOOLTIP
 		NotebookFrame.CancelButton:Enable()
 	elseif known then
 		NotebookFrame.SaveButton:Disable()
-		NotebookFrame.SaveButton:SetScript( "OnClick", Notebook.Frame_SaveButtonOnClick )
-		NotebookFrame.SaveButton:SetText( TXT.SAVE_BUTTON )
-		NotebookFrame.SaveButton.tooltipText = TXT.SAVE_BUTTON_TOOLTIP
-		NotebookFrame.SaveButton.newbieText = TXT.SAVE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton:SetScript("OnClick", Notebook.Frame_SaveButtonOnClick)
+		NotebookFrame.SaveButton:SetText(L.SAVE_BUTTON)
+		NotebookFrame.SaveButton.tooltipText = L.SAVE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton.newbieText = L.SAVE_BUTTON_TOOLTIP
 		NotebookFrame.CancelButton:Disable()
 	elseif update then
 		NotebookFrame.SaveButton:Enable()
-		NotebookFrame.SaveButton:SetScript( "OnClick", Notebook.Frame_UpdateButtonOnClick )
-		NotebookFrame.SaveButton:SetText( TXT.UPDATE_BUTTON )
-		NotebookFrame.SaveButton.tooltipText = TXT.UPDATE_BUTTON_TOOLTIP
-		NotebookFrame.SaveButton.newbieText = TXT.UPDATE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton:SetScript("OnClick", Notebook.Frame_UpdateButtonOnClick)
+		NotebookFrame.SaveButton:SetText(L.UPDATE_BUTTON)
+		NotebookFrame.SaveButton.tooltipText = L.UPDATE_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton.newbieText = L.UPDATE_BUTTON_TOOLTIP
 		NotebookFrame.CancelButton:Disable()
 	else
 		NotebookFrame.SaveButton:Enable()
-		NotebookFrame.SaveButton:SetScript( "OnClick", Notebook.Frame_AddButtonOnClick )
-		NotebookFrame.SaveButton:SetText( TXT.ADD_BUTTON )
-		NotebookFrame.SaveButton.tooltipText = TXT.ADD_BUTTON_TOOLTIP
-		NotebookFrame.SaveButton.newbieText = TXT.ADD_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton:SetScript("OnClick", Notebook.Frame_AddButtonOnClick)
+		NotebookFrame.SaveButton:SetText(L.ADD_BUTTON)
+		NotebookFrame.SaveButton.tooltipText = L.ADD_BUTTON_TOOLTIP
+		NotebookFrame.SaveButton.newbieText = L.ADD_BUTTON_TOOLTIP
 		NotebookFrame.CancelButton:Disable()
 	end
 end
@@ -996,7 +1038,7 @@ function Notebook.Frame_UpdateList(self, offset, autoScroll)
 			local ndata = _notesList[filteredIndex]
 			button.nindex = filteredIndex
 			if ndata.saved or (NotebookFrame.editing and NotebookFrame.selectedID == ndata.id) then
-				titleText:SetText(ndata.title .. TXT.TITLE_CHANGE_NOT_SAVED)
+				titleText:SetText(ndata.title .. L.TITLE_CHANGE_NOT_SAVED)
 			else
 				titleText:SetText(ndata.title)
 			end
@@ -1017,20 +1059,20 @@ function Notebook.Frame_UpdateList(self, offset, autoScroll)
 			local tooltipText
 			if ndata.known then
 				if ndata.author == _playerName then
-					tooltipText = format(TXT.DETAILS_DATE_KNOWN_SAVED_FORMAT, Notebook.UnpackDate(ndata.date))
+					tooltipText = format(L.DETAILS_DATE_KNOWN_SAVED_FORMAT, Notebook:GetDateText(ndata.date))
 				else
-					tooltipText = format(TXT.DETAILS_DATE_KNOWN_UPDATED_FORMAT, Notebook.UnpackDate(ndata.date), ndata.author)
+					tooltipText = format(L.DETAILS_DATE_KNOWN_UPDATED_FORMAT, Notebook:GetDateText(ndata.date), ndata.author)
 				end
 			else
-				tooltipText = format(TXT.DETAILS_DATE_UNSAVED_FORMAT, Notebook.UnpackDate(ndata.date), ndata.author)
+				tooltipText = format(L.DETAILS_DATE_UNSAVED_FORMAT, Notebook:GetDateText(ndata.date), ndata.author)
 			end
 			if ndata.sent then
-				tooltipText = tooltipText .. "\n" .. format(TXT.DETAILS_SENT_FORMAT, Notebook.UnpackDate(ndata.sent))
+				tooltipText = tooltipText .. "\n" .. format(L.DETAILS_SENT_FORMAT, Notebook:GetDateText(ndata.sent))
 			end
 			if not ndata.known then
-				tooltipText = tooltipText .. "\n" .. TXT.DETAILS_NOT_KNOWN_TEXT
+				tooltipText = tooltipText .. "\n" .. L.DETAILS_NOT_KNOWN_TEXT
 			end
-			tooltipText = tooltipText .. "\n" .. format(TXT.DETAILS_SIZE_FORMAT, strlen(ndata.description))
+			tooltipText = tooltipText .. "\n" .. format(L.DETAILS_SIZE_FORMAT, strlen(ndata.description))
 			button.tooltipText = tooltipText
 			if GameTooltip:IsOwned(button) then
 				GameTooltip:SetText(button.tooltipText, 1, 1, 1)
@@ -1064,7 +1106,7 @@ function Notebook.Frame_ListButtonOnClick(self, clicked)
 	local ndata = _notesList[self.nindex]
 	if NotebookFrame.selectedID ~= ndata.id then
 		if NotebookFrame.editing then
-			local pdata = Notebook.FindByID(NotebookFrame.selectedID)
+			local pdata = Notebook:FindByID(NotebookFrame.selectedID)
 			if pdata then
 				local text = NotebookFrame.EditBox:GetText()
 				if text ~= pdata.description then
@@ -1116,7 +1158,7 @@ function Notebook.Frame_DropdownInitialize(self)
 		-- Send options sub-menu.  This is disabled when the note has been
 		-- edited but not saved, we are in send cooldown, or the note is not
 		-- flagged for sending.
-		info.text = TXT.SEND_OPTION
+		info.text = L.SEND_OPTION
 		info.notCheckable = 1
 		info.keepShownOnClick = 1
 		if NotebookFrame.editing or _sendCooldownTimer or not ndata.send then
@@ -1131,31 +1173,31 @@ function Notebook.Frame_DropdownInitialize(self)
 		info.disabled = nil
 		info.hasArrow = nil
 		if ndata.known then
-			info.text = TXT.SAVE_OPTION
-			info.value = TXT.SAVE_OPTION
+			info.text = L.SAVE_OPTION
+			info.value = L.SAVE_OPTION
 			if not NotebookFrame.editing then
 				info.disabled = 1
 			end
 		elseif ndata.update then
-			info.text = TXT.UPDATE_OPTION
-			info.value = TXT.UPDATE_OPTION
+			info.text = L.UPDATE_OPTION
+			info.value = L.UPDATE_OPTION
 		else
-			info.text = TXT.ADD_OPTION
-			info.value = TXT.ADD_OPTION
+			info.text = L.ADD_OPTION
+			info.value = L.ADD_OPTION
 		end
 		info.func = Notebook.Frame_DropdownSelect
 		UIDropDownMenu_AddButton(info)
 
 		-- Rename option
 		info.disabled = nil
-		info.text = TXT.RENAME_OPTION
-		info.value = TXT.RENAME_OPTION
+		info.text = L.RENAME_OPTION
+		info.value = L.RENAME_OPTION
 		info.func = Notebook.Frame_DropdownSelect
 		UIDropDownMenu_AddButton(info)
 
 		-- Delete option
-		info.text = TXT.DELETE_OPTION
-		info.value = TXT.DELETE_OPTION
+		info.text = L.DELETE_OPTION
+		info.value = L.DELETE_OPTION
 		info.func = Notebook.Frame_DropdownSelect
 		UIDropDownMenu_AddButton(info)
 
@@ -1166,21 +1208,21 @@ function Notebook.Frame_DropdownInitialize(self)
 		UIDropDownMenu_AddButton(info)
 
 	elseif UIDROPDOWNMENU_MENU_LEVEL == 2 then
-		if UIDROPDOWNMENU_MENU_VALUE == TXT.SEND_OPTION then
+		if UIDROPDOWNMENU_MENU_VALUE == L.SEND_OPTION then
 			info = UIDropDownMenu_CreateInfo()
 			info.notCheckable = 1
 			info.func = Notebook.Frame_DropdownSelect
 
 			-- Send to specified player
-			info.text = TXT.SEND_TO_PLAYER
-			info.value = TXT.SEND_TO_PLAYER
+			info.text = L.SEND_TO_PLAYER
+			info.value = L.SEND_TO_PLAYER
 			info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER"].r * 255, ChatTypeInfo["WHISPER"].g * 255, ChatTypeInfo["WHISPER"].b * 255 )
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
 
 			if UnitCanCooperate("player", "target") then
 				-- Send to target
-				info.text = TXT.SEND_TO_TARGET
-				info.value = TXT.SEND_TO_TARGET
+				info.text = L.SEND_TO_TARGET
+				info.value = L.SEND_TO_TARGET
 				info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["WHISPER"].r * 255, ChatTypeInfo["WHISPER"].g * 255, ChatTypeInfo["WHISPER"].b * 255 )
 				info.func = Notebook.Frame_DropdownSelect
 				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1188,8 +1230,8 @@ function Notebook.Frame_DropdownInitialize(self)
 
 			if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
 				-- Send to instance
-				info.text = TXT.SEND_TO_INSTANCE
-				info.value = TXT.SEND_TO_INSTANCE
+				info.text = L.SEND_TO_INSTANCE
+				info.value = L.SEND_TO_INSTANCE
 				info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["INSTANCE_CHAT"].r * 255, ChatTypeInfo["INSTANCE_CHAT"].g * 255, ChatTypeInfo["INSTANCE_CHAT"].b * 255 )
 				info.func = Notebook.Frame_DropdownSelect
 				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1197,8 +1239,8 @@ function Notebook.Frame_DropdownInitialize(self)
 
 			if IsInRaid() or IsInGroup(LE_PARTY_CATEGORY_HOME) then
 				-- Send to party
-				info.text = TXT.SEND_TO_PARTY
-				info.value = TXT.SEND_TO_PARTY
+				info.text = L.SEND_TO_PARTY
+				info.value = L.SEND_TO_PARTY
 				info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["PARTY"].r * 255, ChatTypeInfo["PARTY"].g * 255, ChatTypeInfo["PARTY"].b * 255 )
 				info.func = Notebook.Frame_DropdownSelect
 				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1206,8 +1248,8 @@ function Notebook.Frame_DropdownInitialize(self)
 
 			if IsInRaid() and (UnitIsGroupLeader("player") and UnitIsGroupAssistant("player")) then
 				-- Send to raid (only if you are leader or officer)
-				info.text = TXT.SEND_TO_RAID
-				info.value = TXT.SEND_TO_RAID
+				info.text = L.SEND_TO_RAID
+				info.value = L.SEND_TO_RAID
 				info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["RAID"].r * 255, ChatTypeInfo["RAID"].g * 255, ChatTypeInfo["RAID"].b * 255 )
 				info.func = Notebook.Frame_DropdownSelect
 				UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1220,8 +1262,8 @@ function Notebook.Frame_DropdownInitialize(self)
 
 				if guildSpeak then
 					-- Send to guild
-					info.text = TXT.SEND_TO_GUILD
-					info.value = TXT.SEND_TO_GUILD
+					info.text = L.SEND_TO_GUILD
+					info.value = L.SEND_TO_GUILD
 					info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["GUILD"].r * 255, ChatTypeInfo["GUILD"].g * 255, ChatTypeInfo["GUILD"].b * 255 )
 					info.func = Notebook.Frame_DropdownSelect
 					UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1229,8 +1271,8 @@ function Notebook.Frame_DropdownInitialize(self)
 
 				if officerSpeak then
 					-- Send to officer
-					info.text = TXT.SEND_TO_OFFICER
-					info.value = TXT.SEND_TO_OFFICER
+					info.text = L.SEND_TO_OFFICER
+					info.value = L.SEND_TO_OFFICER
 					info.colorCode = format( "\124cff%02x%02x%02x", ChatTypeInfo["OFFICER"].r * 255, ChatTypeInfo["OFFICER"].g * 255, ChatTypeInfo["OFFICER"].b * 255 )
 					info.func = Notebook.Frame_DropdownSelect
 					UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL)
@@ -1239,8 +1281,8 @@ function Notebook.Frame_DropdownInitialize(self)
 
 			if #channelList > 0 or BNGetConversationInfo(1) then
 				-- Send to channel
-				info.text = TXT.SEND_TO_CHANNEL
-				info.value = TXT.SEND_TO_CHANNEL
+				info.text = L.SEND_TO_CHANNEL
+				info.value = L.SEND_TO_CHANNEL
 				info.colorCode = nil
 				info.func = nil
 				info.hasArrow = 1
@@ -1250,7 +1292,7 @@ function Notebook.Frame_DropdownInitialize(self)
 		end
 
 	elseif UIDROPDOWNMENU_MENU_LEVEL == 3 then
-		if UIDROPDOWNMENU_MENU_VALUE == TXT.SEND_TO_CHANNEL then
+		if UIDROPDOWNMENU_MENU_VALUE == L.SEND_TO_CHANNEL then
 			for i = 1, #channelList, 2 do
 				local channelNum = channelList[i]
 				local channelName = channelList[i + 1]
@@ -1259,8 +1301,8 @@ function Notebook.Frame_DropdownInitialize(self)
 					displayNum = Chatmanager.GetChannelInfo(channelNum)
 				end
 				local color = ChatTypeInfo["CHANNEL" .. channelNum]
-				info.text = format(TXT.CHANNEL_NAME_FORMAT, displayNum, channelName)
-				info.value = format(NOTEBOOK_CHANNEL_VALUE_FORMAT, TXT.SEND_TO_CHANNEL, channelNum, channelName)
+				info.text = format(L.CHANNEL_NAME_FORMAT, displayNum, channelName)
+				info.value = format(NOTEBOOK_CHANNEL_VALUE_FORMAT, L.SEND_TO_CHANNEL, channelNum, channelName)
 				info.colorCode = format("|cff%02x%02x%02x", 255*color.r, 255*color.g, 255*color.b)
 				info.notCheckable = 1
 				info.func = Notebook.Frame_DropdownSelect
@@ -1270,7 +1312,7 @@ function Notebook.Frame_DropdownInitialize(self)
 				if BNGetConversationInfo(i) == "conversation" then
 					local color = ChatTypeInfo["BN_CONVERSATION"]
 					info.text = format(CONVERSATION_NAME, i + MAX_WOW_CHAT_CHANNELS)
-					info.value = format(NOTEBOOK_CHANNEL_VALUE_FORMAT, TXT.SEND_TO_CHANNEL, i, "BN_CONVERSATION")
+					info.value = format(NOTEBOOK_CHANNEL_VALUE_FORMAT, L.SEND_TO_CHANNEL, i, "BN_CONVERSATION")
 					info.colorCode = format("|cff%02x%02x%02x", 255*color.r, 255*color.g, 255*color.b)
 					info.notCheckable = 1
 					info.func = Notebook.Frame_DropdownSelect
@@ -1287,15 +1329,15 @@ function Notebook.Frame_SaveButtonOnClick(self, ndata)
 	CloseDropDownMenus()
 	if NotebookFrame.editing then
 		if type(ndata) ~= "table" then
-			ndata = Notebook.FindByID(NotebookFrame.selectedID)
+			ndata = Notebook:FindByID(NotebookFrame.selectedID)
 		end
 		if ndata then
-			Notebook.UpdateDescription(ndata, NotebookFrame.EditBox:GetText())
+			Notebook:UpdateDescription(ndata, NotebookFrame.EditBox:GetText())
 			NotebookFrame.editing = nil
 			ndata.known = true
 			ndata.saved = nil
-			Notebook.UpdateNotKnown()
-			Notebook.FilterList()
+			Notebook:UpdateNotKnown()
+			Notebook:FilterList()
 			Notebook.Frame_UpdateList()
 			Notebook.Frame_UpdateButtons(nil, true)
 		end
@@ -1307,13 +1349,13 @@ function Notebook.Frame_AddButtonOnClick(self, ndata)
 	CloseDropDownMenus()
 	if not NotebookFrame.editing then
 		if type(ndata) ~= "table" then
-			ndata = Notebook.FindByID(NotebookFrame.selectedID)
+			ndata = Notebook:FindByID(NotebookFrame.selectedID)
 		end
 		if ndata then
 			ndata.known = true
 			Notebook.Frame_SetDescriptionText(ndata.description, ndata.known)
-			Notebook.UpdateNotKnown(ndata.title)
-			Notebook.FilterList()
+			Notebook:UpdateNotKnown(ndata.title)
+			Notebook:FilterList()
 			Notebook.Frame_UpdateList()
 			Notebook.Frame_UpdateButtons(nil, true)
 		end
@@ -1325,7 +1367,7 @@ function Notebook.Frame_UpdateButtonOnClick(self, ndata)
 	-- updating an existing note.
 	CloseDropDownMenus()
 	if type(ndata) ~= "table" then
-		ndata = Notebook.FindByID(NotebookFrame.selectedID)
+		ndata = Notebook:FindByID(NotebookFrame.selectedID)
 	end
 	if ndata then
 		local dialogFrame = StaticPopup_Show("NOTEBOOK_UPDATE_CONFIRM", ndata.title, ndata.author)
@@ -1339,7 +1381,7 @@ function Notebook.Frame_CancelButtonOnClick(self)
 	-- Restore the last saved contents of the current note
 	CloseDropDownMenus()
 	if NotebookFrame.editing then
-		local ndata = Notebook.FindByID(NotebookFrame.selectedID)
+		local ndata = Notebook:FindByID(NotebookFrame.selectedID)
 		if ndata then
 			Notebook.Frame_SetDescriptionText(ndata.description, ndata.known)
 			NotebookFrame.editing = nil
@@ -1376,38 +1418,38 @@ function Notebook.Frame_TabButtonOnClick(id)
 	local filterMode = _filterBy
 	local showText = nil
 	local scrollOffset = nil
-	local ndata = Notebook.FindByID(NotebookFrame.selectedID)
+	local ndata = Notebook:FindByID(NotebookFrame.selectedID)
 	if ndata then
 		NotebookFrame.lastSelectedID = NotebookFrame.selectedID
 	else
-		ndata = Notebook.FindByID(NotebookFrame.lastSelectedID)
+		ndata = Notebook:FindByID(NotebookFrame.lastSelectedID)
 	end
 
-	if id == 1 and _filterBy ~= TXT.ALL_TAB then
+	if id == 1 and _filterBy ~= L.ALL_TAB then
 		PanelTemplates_DeselectTab(NotebookFrame.FilterTab2)
 		PanelTemplates_DeselectTab(NotebookFrame.FilterTab3)
 		PanelTemplates_SelectTab(NotebookFrame.FilterTab1)
-		filterMode = TXT.ALL_TAB
+		filterMode = L.ALL_TAB
 		if ndata then
 			showText = true
 		end
 		scrollOffset = NotebookFrame.lastKnownOffset
 		NotebookFrame.lastRecentOffset = FauxScrollFrame_GetOffset(NotebookFrame.ListScrollFrame)
-	elseif id == 2 and _filterBy ~= TXT.MINE_TAB then
+	elseif id == 2 and _filterBy ~= L.MINE_TAB then
 		PanelTemplates_DeselectTab(NotebookFrame.FilterTab1)
 		PanelTemplates_DeselectTab(NotebookFrame.FilterTab3)
 		PanelTemplates_SelectTab(NotebookFrame.FilterTab2)
-		filterMode = TXT.MINE_TAB
+		filterMode = L.MINE_TAB
 		if ndata and (ndata.author == _playerName) then
 			showText = true
 		end
 		scrollOffset = NotebookFrame.lastRecentOffset
 		NotebookFrame.lastKnownOffset = FauxScrollFrame_GetOffset(NotebookFrame.ListScrollFrame)
-	elseif id == 3 and _filterBy ~= TXT.RECENT_TAB then
+	elseif id == 3 and _filterBy ~= L.RECENT_TAB then
 		PanelTemplates_DeselectTab(NotebookFrame.FilterTab1)
 		PanelTemplates_DeselectTab(NotebookFrame.FilterTab2)
 		PanelTemplates_SelectTab(NotebookFrame.FilterTab3)
-		filterMode = TXT.RECENT_TAB
+		filterMode = L.RECENT_TAB
 		if ndata and ndata.recent then
 			showText = true
 		end
@@ -1418,7 +1460,7 @@ function Notebook.Frame_TabButtonOnClick(id)
 		if showText then
 			if NotebookFrame.selectedID ~= ndata.id then
 				if NotebookFrame.editing then
-					local pdata = Notebook.FindByID(NotebookFrame.selectedID)
+					local pdata = Notebook:FindByID(NotebookFrame.selectedID)
 					if pdata then
 						local text = NotebookFrame.EditBox:GetText()
 						if text ~= pdata.description then
@@ -1441,7 +1483,7 @@ function Notebook.Frame_TabButtonOnClick(id)
 			end
 		else
 			if NotebookFrame.editing then
-				local pdata = Notebook.FindByID(NotebookFrame.selectedID)
+				local pdata = Notebook:FindByID(NotebookFrame.selectedID)
 				if pdata then
 					local text = NotebookFrame.EditBox:GetText()
 					if text ~= pdata.description then
@@ -1460,7 +1502,7 @@ function Notebook.Frame_TabButtonOnClick(id)
 			end
 		end
 		_filterBy = filterMode
-		Notebook.FilterList()
+		Notebook:FilterList()
 		Notebook.Frame_UpdateList(nil, scrollOffset, true)
 	end
 end
@@ -1525,19 +1567,19 @@ function Notebook.Frame_DropdownSelect(self)
 	if self.value == CANCEL then
 		-- Dummy action for cancel just to close the drop down menus
 
-	elseif self.value == TXT.SAVE_OPTION then
+	elseif self.value == L.SAVE_OPTION then
 		-- Save the current description
 		Notebook.Frame_SaveButtonOnClick(ndata)
 
-	elseif self.value == TXT.UPDATE_OPTION then
+	elseif self.value == L.UPDATE_OPTION then
 		-- Update the corresponding note with this one
 		Notebook.Frame_UpdateButtonOnClick(ndata)
 
-	elseif self.value == TXT.ADD_OPTION then
+	elseif self.value == L.ADD_OPTION then
 		-- Add the current note
 		Notebook.Frame_AddButtonOnClick(self, ndata)
 
-	elseif self.value == TXT.RENAME_OPTION then
+	elseif self.value == L.RENAME_OPTION then
 		-- Set current title so that it will be set in the dialog box
 		_currentTitle = ndata.title
 		local dialogFrame = StaticPopup_Show("NOTEBOOK_NEW_TITLE")
@@ -1546,7 +1588,7 @@ function Notebook.Frame_DropdownSelect(self)
 			dialogFrame:SetWidth(420)
 		end
 
-	elseif self.value == TXT.DELETE_OPTION then
+	elseif self.value == L.DELETE_OPTION then
 		-- If its a known entry, prompt for confirmation, otherwise just
 		-- remove it
 		if ndata.known then
@@ -1555,39 +1597,39 @@ function Notebook.Frame_DropdownSelect(self)
 				dialogFrame.data = ndata.id
 			end
 		else
-			Notebook.RemoveByID(ndata.id)
-			Notebook.UpdateNotKnown()
+			Notebook:RemoveNoteByID(ndata.id)
+			Notebook:UpdateNotKnown()
 			NotebookFrame.selectedID = nil
 			Notebook.Frame_SetDescriptionText("")
 			NotebookFrame.editing = nil
 			Notebook.Frame_UpdateButtons(nil, true)
 			Notebook.Frame_SetCanSendCheckbox()
-			Notebook.FilterList()
+			Notebook:FilterList()
 			Notebook.Frame_UpdateList()
 		end
 
-	elseif self.value == TXT.SEND_TO_INSTANCE then
-		Notebook.SendNote(ndata, "INSTANCE_CHAT")
+	elseif self.value == L.SEND_TO_INSTANCE then
+		Notebook:SendNote(ndata, "INSTANCE_CHAT")
 
-	elseif self.value == TXT.SEND_TO_RAID then
-		Notebook.SendNote(ndata, "RAID")
+	elseif self.value == L.SEND_TO_RAID then
+		Notebook:SendNote(ndata, "RAID")
 
-	elseif self.value == TXT.SEND_TO_PARTY then
-		Notebook.SendNote(ndata, "PARTY")
+	elseif self.value == L.SEND_TO_PARTY then
+		Notebook:SendNote(ndata, "PARTY")
 
-	elseif self.value == TXT.SEND_TO_GUILD then
-		Notebook.SendNote(ndata, "GUILD")
+	elseif self.value == L.SEND_TO_GUILD then
+		Notebook:SendNote(ndata, "GUILD")
 
-	elseif self.value == TXT.SEND_TO_OFFICER then
-		Notebook.SendNote(ndata, "OFFICER")
+	elseif self.value == L.SEND_TO_OFFICER then
+		Notebook:SendNote(ndata, "OFFICER")
 
-	elseif self.value == TXT.SEND_TO_TARGET then
+	elseif self.value == L.SEND_TO_TARGET then
 		local target = GetUnitName("target", true)
 		if target then
-			Notebook.SendNote(ndata, "WHISPER", target)
+			Notebook:SendNote(ndata, "WHISPER", target)
 		end
 
-	elseif self.value == TXT.SEND_TO_PLAYER then
+	elseif self.value == L.SEND_TO_PLAYER then
 		local dialogFrame = StaticPopup_Show("NOTEBOOK_SEND_TO_PLAYER")
 		if dialogFrame then
 			dialogFrame.data = ndata.id
@@ -1595,9 +1637,9 @@ function Notebook.Frame_DropdownSelect(self)
 
 	else
 		local _, _, option, channelNum, channelName = strfind(self.value, NOTEBOOK_CHANNEL_VALUE_FIND)
-		if option == TXT.SEND_TO_CHANNEL then
+		if option == L.SEND_TO_CHANNEL then
 			if channelName == "BN_CONVERSATION" then
-				return Notebook.SendNote(ndata, "BN_CONVERSATION", channelNum)
+				return Notebook:SendNote(ndata, "BN_CONVERSATION", channelNum)
 			end
 
 			local serverList = { EnumerateServerChannels() }
@@ -1616,7 +1658,7 @@ function Notebook.Frame_DropdownSelect(self)
 					dialogFrame.data.channelNum = channelNum
 				end
 			else
-				Notebook.SendNote(ndata, "CHANNEL", tonumber(channelNum))
+				Notebook:SendNote(ndata, "CHANNEL", tonumber(channelNum))
 			end
 		end
 	end
@@ -1629,7 +1671,7 @@ function Notebook.Frame_TextChanged(self)
 		-- cancel buttons.  Note that we don't need to update the filter list
 		-- here because if the note wasn't already on the list then it
 		-- wouldn't have been editable.
-		local ndata = Notebook.FindByID(NotebookFrame.selectedID)
+		local ndata = Notebook:FindByID(NotebookFrame.selectedID)
 		if ndata then
 			-- First work around the timing of setting focus and getting the
 			-- text changed notification by seeing if the description is ""
@@ -1676,7 +1718,7 @@ end
 --	Popup support functions
 ------------------------------------------------------------------------
 
-function Notebook.GetPopupData(type)
+function Notebook:GetPopupData(type)
 	if type == "PLAYER" then
 		if _lastPlayer then
 			return _lastPlayer
@@ -1689,7 +1731,7 @@ function Notebook.GetPopupData(type)
 	return ""
 end
 
-function Notebook.HandlePopupAccept(type, data, text)
+function Notebook:HandlePopupInput(type, data, text)
 	if text then
 		text = strtrim(text)
 	end
@@ -1698,16 +1740,16 @@ function Notebook.HandlePopupAccept(type, data, text)
 		-- Dialog for accepting player name
 		text = gsub("%s", "") -- remove spaces
 		if text ~= "" then
-			local ndata = Notebook.FindByID(data)
+			local ndata = Notebook:FindByID(data)
 			if ndata then
 				local presenceID = GetAutoCompletePresenceID(text)
 				--print("HandlePopupAccept", type, text, presenceID)
 				if presenceID then
 					_lastPlayer = presenceID
-					Notebook.SendNote(ndata, "BN_WHISPER", presenceID)
+					Notebook:SendNote(ndata, "BN_WHISPER", presenceID)
 				elseif text and text ~= "" then
 					_lastPlayer = text
-					Notebook.SendNote(ndata, "WHISPER", text)
+					Notebook:SendNote(ndata, "WHISPER", text)
 				end
 			end
 		end
@@ -1718,24 +1760,24 @@ function Notebook.HandlePopupAccept(type, data, text)
 		if text ~= "" then
 			if data then
 				-- Rename of note
-				local ndata = Notebook.FindByID(data)
+				local ndata = Notebook:FindByID(data)
 				if ndata and (text ~= ndata.title) then
-					if not Notebook.FindByTitle(text) then
-						Notebook.Rename(ndata, text)
-						Notebook.UpdateNotKnown()
+					if not Notebook:FindByTitle(text) then
+						Notebook:Rename(ndata, text)
+						Notebook:UpdateNotKnown()
 						Notebook.Frame_UpdateButtons(NotebookFrame.editing, ndata.known, ndata.update)
-						Notebook.FilterList()
+						Notebook:FilterList()
 						Notebook.Frame_UpdateList()
 					else
-						ChatFrame1:AddMessage(ERROR_PREFIX .. " " .. format(CMD.ERROR_RENAME_NOT_UNIQUE_FORMAT, text))
+						Notebook:Error(format(L.ERR_RENAME_NOT_UNIQUE_FORMAT, text))
 					end
 				end
 			else
 				-- Add a new (empty) note
-				if not Notebook.FindByTitle(text, true) then
-					local ndata = Notebook.Add(text, _playerName, date(NOTEBOOK_GETDATE_FORMAT), "", true, _addSavedToRecent, false)
+				if not Notebook:FindByTitle(text, true) then
+					local ndata = Notebook:AddNote(text, _playerName, date(NOTEBOOK_GETDATE_FORMAT), "", true, _addSavedToRecent, false)
 					NotebookFrame.selectedID = ndata.id
-					Notebook.FilterList()
+					Notebook:FilterList()
 					Notebook.Frame_UpdateList(nil, nil, true)
 					NotebookFrame.editing = nil
 					Notebook.Frame_UpdateButtons(nil, true)
@@ -1743,50 +1785,50 @@ function Notebook.HandlePopupAccept(type, data, text)
 					Notebook.Frame_SetDescriptionText(ndata.description, ndata.known)
 					NotebookFrame.EditBox:SetFocus()
 				else
-					ChatFrame1:AddMessage(ERROR_PREFIX .. " " .. format(CMD.ERROR_PREFIX, text))
+					Notebook:Error(format(L.ERR_RENAME_NOT_UNIQUE_FORMAT, text))
 				end
 			end
 		else
-			ChatFrame1:AddMessage(ERROR_PREFIX .. " " .. CMD.ERROR_RENAME_EMPTY)
+			Notebook:Error(L.ERR_RENAME_EMPTY)
 		end
 	elseif type == "CONFIRM" then
-		local ndata = Notebook.FindByID(data)
+		local ndata = Notebook:FindByID(data)
 		if ndata then
-			Notebook.RemoveByID(ndata.id)
-			Notebook.UpdateNotKnown()
+			Notebook:RemoveNoteByID(ndata.id)
+			Notebook:UpdateNotKnown()
 			NotebookFrame.selectedID = nil
 			Notebook.Frame_SetDescriptionText("")
 			NotebookFrame.editing = nil
 			Notebook.Frame_UpdateButtons(nil, true)
 			Notebook.Frame_SetCanSendCheckbox()
-			Notebook.FilterList()
+			Notebook:FilterList()
 			Notebook.Frame_UpdateList()
 		end
 	elseif type == "UPDATE" then
-		local ndata = Notebook.FindByID(data)
+		local ndata = Notebook:FindByID(data)
 		if ndata then
-			local pdata = Notebook.FindByTitle(ndata.title, true)
+			local pdata = Notebook:FindByTitle(ndata.title, true)
 			if pdata then
 				-- Update description and author, but not send flag
-				Notebook.UpdateDescription(pdata, ndata.description)
+				Notebook:UpdateDescription(pdata, ndata.description)
 				pdata.author = ndata.author
 				pdata.saved = nil
 				pdata.recent = true
-				Notebook.UpdateNotKnown(pdata.title)
+				Notebook:UpdateNotKnown(pdata.title)
 				NotebookFrame.selectedID = pdata.id
 				Notebook.Frame_SetDescriptionText(pdata.description, true)
 				NotebookFrame.editing = nil
 				Notebook.Frame_UpdateButtons(nil, true)
 				Notebook.Frame_SetCanSendCheckbox(true, pdata.send)
-				Notebook.FilterList()
+				Notebook:FilterList()
 				Notebook.Frame_UpdateList()
 			end
 		end
 	elseif type == "SERVER" then
 		if data then
-			local ndata = Notebook.FindByID(data.id)
+			local ndata = Notebook:FindByID(data.id)
 			if ndata then
-				Notebook.SendNote(ndata, "CHANNEL", tonumber(data.channelNum))
+				Notebook:SendNote(ndata, "CHANNEL", tonumber(data.channelNum))
 			end
 		end
 	end
@@ -1839,8 +1881,7 @@ end
 ------------------------------------------------------------------------
 
 function Notebook.OnEvent(self, event, ...)
-	print("Notebook", event, ...)
-	return Notebook[event] and Notebook[event](...) or Notebook.ChatMessageHandler(event, ...)
+	return Notebook[event] and Notebook[event](Notebook, ...) or Notebook:ProcessChatMessage(event, ...)
 end
 
 ------------------------------------------------------------------------
@@ -1862,88 +1903,88 @@ end
 ------------------------------------------------------------------------
 
 function NotebookSendNote(title, channel, target)
-	-- This function is basically a wrapper for Notebook.SendNote, taking a
+	-- This function is basically a wrapper for Notebook:SendNote, taking a
 	-- note title and determining the note to which this applies (looking at
-	-- known notes only) and then sendingit to the indicated channel and
-	-- target.  The target can either be a player name (for channel "WHISPER")
+	-- known notes only) and then sending it to the indicated channel and
+	-- target. The target can either be a player name (for channel "WHISPER")
 	-- or the name of a chat channel (for target "CHANNEL").
 	if _sendCooldownTimer then
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. TXT.ERROR_SEND_COOLDOWN)
+		return Notebook:Error(L.ERR_SEND_COOLDOWN)
 	end
 	if not title or title == "" or not channel or channel == "" then
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. TXT.ERROR_SEND_INVALID)
+		return Notebook:Error(L.ERR_SEND_INVALID)
 	end
 
-	local ndata = Notebook.FindByTitle(title, true)
+	local ndata = Notebook:FindByTitle(title, true)
 	if not ndata then
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. format(TXT.ERROR_SEND_INVALID_NOTE, title))
+		return Notebook:Error(format(L.ERR_SEND_INVALID_NOTE, title))
 	elseif NotebookFrame.selectedID == ndata.id and NotebookFrame.editing then
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. TXT.ERROR_SEND_EDITING)
+		return Notebook:Error(L.ERR_SEND_EDITING)
 
 	elseif channel == "INSTANCE" then
 		if GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE) > 0 then
-			return Notebook.SendNote(ndata, "INSTANCE_CHAT")
+			return Notebook:SendNote(ndata, "INSTANCE_CHAT")
 		end
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. ERR_NOT_IN_INSTANCE_GROUP)
+		return Notebook:Error(ERR_NOT_IN_INSTANCE_GROUP)
 
 	elseif channel == "RAID" then
 		if IsInRaid() then
 			if UnitIsGroupLeader("player") or UnitIsGroupAssistant("player") then
-				return Notebook.SendNote(ndata, "RAID")
+				return Notebook:SendNote(ndata, "RAID")
 			end
-			return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. TXT.ERROR_SEND_RAID_LEADER)
+			return Notebook:Error(L.ERR_SEND_RAID_LEADER)
 		end
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. ERR_NOT_IN_RAID)
+		return Notebook:Error(ERR_NOT_IN_RAID)
 
 	elseif channel == "PARTY" then
 		if IsInGroup() and not IsInRaid() then
-			return Notebook.SendNote(ndata, "PARTY")
+			return Notebook:CompareOnTitleSendNote(ndata, "PARTY")
 		end
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. ERR_NOT_IN_GROUP)
+		return Notebook:Error(ERR_NOT_IN_GROUP)
 
 	elseif channel == "GUILD" then
 		if IsInGuild() then
-			return Notebook.SendNote(ndata, "GUILD")
+			return Notebook:CompareOnTitleSendNote(ndata, "GUILD")
 		end
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. ERR_GUILD_PLAYER_NOT_IN_GUILD)
+		return Notebook:Error(ERR_GUILD_PLAYER_NOT_IN_GUILD)
 
 	elseif channel == "TARGET" then
 		if UnitCanCooperate("player", "target") then
 			local target = GetUnitName("target", true)
-			return Notebook.SendNote(ndata, "WHISPER", target)
+			return Notebook:SendNote(ndata, "WHISPER", target)
 		end
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. ERR_GENERIC_NO_TARGET) -- TODO: better error message
+		return Notebook:Error(ERR_GENERIC_NO_TARGET) -- TODO: better error message
 
 	elseif channel == "WHISPER" then
 		local presenceID = GetAutoCompletePresenceID(target)
 		if presenceID then
-			return Notebook.SendNote(ndata, "BN_WHISPER", presenceID)
+			return Notebook:SendNote(ndata, "BN_WHISPER", presenceID)
 		elseif target and target ~= "" then
-			return Notebook.SendNote(ndata, "WHISPER", target)
+			return Notebook:SendNote(ndata, "WHISPER", target)
 		end
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. TXT.ERROR_SEND_NO_NAME)
+		return Notebook:Error(L.ERR_SEND_NO_NAME)
 
 	elseif channel == "BN_CONVERSATION" then
 		if target and target ~= "" then
 			if BNGetConversationInfo(target) then
-				return Notebook.SendNote(ndata, "BN_CONVERSATION", target)
+				return Notebook:SendNote(ndata, "BN_CONVERSATION", target)
 			end
-			return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. format(TXT.ERROR_SEND_INVALID_CHANNEL, target))
+			return Notebook:Error(format(L.ERR_SEND_INVALID_CHANNEL, target))
 		end
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. TXT.ERROR_SEND_NO_CHANNEL)
+		return Notebook:Error(L.ERR_SEND_NO_CHANNEL)
 
 	elseif channel == "CHANNEL" then
 		if target and target ~= "" then
 			local channelNum = GetChannelName(target)
 			if channelNum and channelNum ~= 0 then
-				return Notebook.SendNote(ndata, "CHANNEL", channelNum)
+				return Notebook:SendNote(ndata, "CHANNEL", channelNum)
 			end
-			return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. format(TXT.ERROR_SEND_INVALID_CHANNEL, target))
+			return Notebook:Error(format(L.ERR_SEND_INVALID_CHANNEL, target))
 		end
-		return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. TXT.ERROR_SEND_NO_CHANNEL)
+		return Notebook:Error(L.ERR_SEND_NO_CHANNEL)
 	end
 
-	return DEFAULT_CHAT_FRAME:AddMessage(ERROR_PREFIX .. format(ERROR_SEND_UNKNOWN_CHANNEL, channel))
+	return Notebook:Error(format(ERROR_SEND_UNKNOWN_CHANNEL, channel))
 end
 
 ------------------------------------------------------------------------
@@ -1952,55 +1993,61 @@ end
 
 SLASH_NOTEBOOK1 = "/notebook"
 SLASH_NOTEBOOK2 = "/note"
-SLASH_NOTEBOOK3 = Notebook.NOTEBOOK_SLASH
+SLASH_NOTEBOOK3 = Notebook.SLASH_COMMAND
 
 local SlashHandlers = {
-	[CMD.COMMAND_DEBUGON] = function(params)
+	[L.CMD_DEBUGON] = function(params)
 		_debugFrame = params and _G[params] or DEFAULT_CHAT_FRAME
-		DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_DEBUGON_CONFIRM)
+		Notebook:Print(L.CMD_DEBUGON_CONFIRM)
 	end,
-	[CMD.COMMAND_DEBUGOFF] = function()
+	[L.CMD_DEBUGOFF] = function()
 		_debugFrame = nil
-		DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_DEBUGOFF_CONFIRM)
+		Notebook:Print(L.CMD_DEBUGOFF_CONFIRM)
 	end,
-	[CMD.COMMAND_SHOW] = function()
+	[L.CMD_SHOW] = function()
 		ShowUIPanel(NotebookFrame)
 	end,
-	[CMD.COMMAND_HIDE] = function()
+	[L.CMD_HIDE] = function()
 		HideUIPanel(NotebookFrame)
 	end,
-	[CMD.COMMAND_STATUS] = function()
+	[L.CMD_STATUS] = function()
 		UpdateAddOnMemoryUsage()
-		DEFAULT_CHAT_FRAME:AddMessage(format(CMD.COMMAND_STATUS_FORMAT, _notesCount, GetAddOnMemoryUsage(NOTEBOOK) + 0.5))
+		Notebook:Print(format(L.CMD_STATUS_FORMAT, _notesCount, GetAddOnMemoryUsage(NOTEBOOK) + 0.5))
 	end,
-	[CMD.COMMAND_LIST] = function()
-		DEFAULT_CHAT_FRAME:AddMessage(CMD.COMMAND_LIST_CONFIRM)
+	[L.CMD_LIST] = function()
+		Notebook:Print(L.CMD_LIST_CONFIRM)
 		local filterMode = _filterBy
-		_filterBy = TXT.KNOWN_TAB
-		Notebook.FilterList()
+		_filterBy = L.KNOWN_TAB
+		Notebook:FilterList()
 		for i = 1, #_filteredList do
 			local ndata = _notesList[_filteredList[i]]
 			if ndata then
-				local text = format(CMD.COMMAND_LIST_FORMAT, ndata.title, strlen(ndata.description), ndata.author, Notebook.UnpackDate(ndata.date))
-				DEFAULT_CHAT_FRAME:AddMessage(text)
+				local text = format(L.CMD_LIST_FORMAT, ndata.title, strlen(ndata.description), ndata.author, Notebook:GetDateText(ndata.date))
+				Notebook:Print(false, text)
 			end
 		end
 		if _filterBy ~= filterMode then
 			_filterBy = filterMode
-			Notebook.FilterList()
+			Notebook:FilterList()
 		end
 	end,
-	[CMD.COMMAND_WELCOME] = function()
-		local ndata = Notebook.FindByTitle(_firstTimeNote.title, true)
+	[L.CMD_SEND] = function(params)
+		local title, channel, target = strmatch(params, "(.+) (%S+) (%S+)$")
+		if title and channel and target then
+			NotebookSendNote(title, channel, target)
+		end
+	end,
+	[L.CMD_WELCOME] = function()
+		local ndata = Notebook:FindByTitle(_firstTimeNote.title, true)
 		if not ndata then
-			local ndata = Notebook.Add(_firstTimeNote.title, _firstTimeNote.author, _firstTimeNote.date, _firstTimeNote.description, true, true, false)
-			Notebook.UpdateNotKnown()
-			Notebook.FilterList()
+			local ndata = Notebook:AddNote(_firstTimeNote.title, _firstTimeNote.author, _firstTimeNote.date, _firstTimeNote.description, true, true, false)
+			Notebook:UpdateNotKnown()
+			Notebook:FilterList()
 			Notebook.Frame_UpdateList()
 			Notebook.Frame_TabButtonOnClick(1)
 			NotebookFrame:Show()
 		else
-			ChatFrame1:AddMessage(ERROR_PREFIX .. " " .. format(CMD.ERROR_PREFIX, _firstTimeNote.title))
+			Notebook:Error(format(L.ERR_PREFIX, _firstTimeNote.title))
 		end
 	end,
 }
@@ -2014,10 +2061,10 @@ SlashCmdList["NOTEBOOK"] = function(text)
 	if SlashHandlers[command] then
 		SlashHandlers[command](params)
 	else
-		DEFAULT_CHAT_FRAME:AddMessage(NORMAL_FONT_COLOR_CODE .. Notebook.name .. "|r " .. GAME_VERSION_LABEL .. " " .. Notebook.version)
-		DEFAULT_CHAT_FRAME:AddMessage(Notebook.description)
-		for i = 1, #NOTEBOOK_HELP do
-			DEFAULT_CHAT_FRAME:AddMessage(NOTEBOOK_HELP[i])
+		Notebook:Print(NORMAL_FONT_COLOR_CODE .. Notebook.name .. "|r " .. GAME_VERSION_LABEL .. " " .. Notebook.version)
+		Notebook:Print(false, Notebook.description)
+		for i = 1, #HELP_TEXT do
+			Notebook:Print(false, HELP_TEXT[i])
 		end
 	end
 end
@@ -2051,13 +2098,13 @@ do
 		SubText:SetText(Notebook.description)
 
 		local helpText = ""
-		local slash = Notebook.NOTEBOOK_SLASH or "/notebook"
-		for i = 1, #NOTEBOOK_HELP do
-			local command, description = strmatch(NOTEBOOK_HELP[i], "%- (%S+) %- (.+)")
+		local slash = Notebook.SLASH_COMMAND or "/notebook"
+		for i = 1, #HELP_TEXT do
+			local command, description = strmatch(HELP_TEXT[i], "%- (%S+) %- (.+)")
 			if command and description then
 				helpText = format("%s\n\n%s%s %s|r\n%s", helpText, NORMAL_FONT_COLOR_CODE, slash, command, description)
 			else
-				helpText = helpText .. "\n\n" .. gsub(NOTEBOOK_HELP[i], " /([^%s,]+)", NORMAL_FONT_COLOR_CODE .. " /%1|r")
+				helpText = helpText .. "\n\n" .. gsub(HELP_TEXT[i], " /([^%s,]+)", NORMAL_FONT_COLOR_CODE .. " /%1|r")
 			end
 		end
 		helpText = strsub(helpText, 3)
