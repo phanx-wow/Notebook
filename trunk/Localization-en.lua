@@ -7,142 +7,124 @@
 	http://www.curse.com/addons/wow/notebook
 ----------------------------------------------------------------------]]
 --	English Localization
-local NOTEBOOK, Notebook = ...
-Notebook.name = GetAddOnMetadata(NOTEBOOK, "Title")
-Notebook.description = GetAddOnMetadata(NOTEBOOK, "Notes")
-Notebook.version = GetAddOnMetadata(NOTEBOOK, "Version")
 
-BINDING_HEADER_NOTEBOOK_TITLE = Notebook.name
+local NOTEBOOK, Notebook = ...
+local L = {}
+Notebook.L = L
+
 BINDING_NAME_NOTEBOOK_PANEL = "Toggle Notebook"
 
-------------------------------------------------------------------------
--- Miscellaneous text commands
-local NOTEBOOK_TEXT = {
-	FRAME_TITLE_FORMAT = "%s's Notebook",
-	ALL_TAB = "All",
-	ALL_TAB_TOOLTIP = "All notes",
-	MINE_TAB = "Mine",
-	MINE_TAB_TOOLTIP_FORMAT = "%s's notes",
-	KNOWN_TAB = "Saved",
-	KNOWN_TAB_TOOLTIP = "Saved notes only",
-	RECENT_TAB = "Recent",
-	RECENT_TAB_TOOLTIP = "Recent notes",
-	SAVE_BUTTON = "Save",
-	SAVE_BUTTON_TOOLTIP = "Save the current changes",
-	CANCEL_BUTTON = "Cancel",
-	CANCEL_BUTTON_TOOLTIP = "Revert to the previous text",
-	ADD_BUTTON = "Add",
-	ADD_BUTTON_TOOLTIP = "Add this note to Notebook's saved list",
-	UPDATE_BUTTON = "Update",
-	UPDATE_BUTTON_TOOLTIP = "Update your previously saved note with this new text",
-	NEW_BUTTON = "New",
-	NEW_BUTTON_TOOLTIP = "Create a new note",
-	CHECK_SEND_BUTTON = "Can be sent",
-	CHECK_CAN_SEND_TOOLTIP = "This note can be sent",
-	CHECK_NOT_SEND_TOOLTIP = "This note will not be sent",
+L.FRAME_TITLE_FORMAT = "%s's Notebook"
+L.ALL_TAB = "All"
+L.ALL_TAB_TOOLTIP = "All notes"
+L.MINE_TAB = "Mine"
+L.MINE_TAB_TOOLTIP_FORMAT = "%s's notes"
+L.KNOWN_TAB = "Saved"
+L.KNOWN_TAB_TOOLTIP = "Saved notes only"
+L.RECENT_TAB = "Recent"
+L.RECENT_TAB_TOOLTIP = "Recent notes"
+L.SAVE_BUTTON = "Save"
+L.SAVE_BUTTON_TOOLTIP = "Save the current changes"
+L.CANCEL_BUTTON = "Cancel"
+L.CANCEL_BUTTON_TOOLTIP = "Revert to the previous text"
+L.ADD_BUTTON = "Add"
+L.ADD_BUTTON_TOOLTIP = "Add this note to Notebook's saved list"
+L.UPDATE_BUTTON = "Update"
+L.UPDATE_BUTTON_TOOLTIP = "Update your previously saved note with this new text"
+L.NEW_BUTTON = "New"
+L.NEW_BUTTON_TOOLTIP = "Create a new note"
+L.CHECK_SEND_BUTTON = "Can be sent"
+L.CHECK_CAN_SEND_TOOLTIP = "This note can be sent"
+L.CHECK_NOT_SEND_TOOLTIP = "This note will not be sent"
 
-	DETAILS_DATE_KNOWN_SAVED_FORMAT = "Saved %s",
-	DETAILS_DATE_KNOWN_UPDATED_FORMAT = "%s by %s",
-	DETAILS_DATE_UNSAVED_FORMAT = "%s from %s",
-	DETAILS_SIZE_FORMAT = "- %d characters",
-	DETAILS_NOT_KNOWN_TEXT = "- not saved",
-	DETAILS_SENT_FORMAT = "- sent %s",
-	TITLE_CHANGE_NOT_SAVED = "*",
+L.DETAILS_DATE_KNOWN_SAVED_FORMAT = "Saved %s"
+L.DETAILS_DATE_KNOWN_UPDATED_FORMAT = "%s by %s"
+L.DETAILS_DATE_UNSAVED_FORMAT = "%s from %s"
+L.DETAILS_SIZE_FORMAT = "- %d characters"
+L.DETAILS_NOT_KNOWN_TEXT = "- not saved"
+L.DETAILS_SENT_FORMAT = "- sent %s"
+L.TITLE_CHANGE_NOT_SAVED = "*"
 
-	SAVE_OPTION = "Save",
-	ADD_OPTION = "Add",
-	UPDATE_OPTION = "Update",
-	RENAME_OPTION = "Rename",
-	DELETE_OPTION = "Delete",
-	SEND_OPTION = "Send To",
-	SEND_TO_TARGET = "Target",
-	SEND_TO_PLAYER = "Player",
-	SEND_TO_INSTANCE = "Instance",
-	SEND_TO_PARTY = "Party",
-	SEND_TO_RAID = "Raid",
-	SEND_TO_GUILD = "Guild",
-	SEND_TO_OFFICER = "Officer",
-	SEND_TO_CHANNEL = "Channel",
-	CHANNEL_NAME_FORMAT = "%d. %s",
+L.NOTE_RECEIVED_FORMAT = "Notebook added note %q from %s."
 
-	ENTER_PLAYER_NAME_TEXT = "Enter name of player to send to:",
-	ENTER_NEW_TITLE_TEXT = "Enter new title for note:",
-	CONFIRM_REMOVE_FORMAT = "Really delete %q?",
-	CONFIRM_UPDATE_FORMAT = "Really replace %q with the one from %s?",
-	CONFIRM_SERVER_CHANNEL_FORMAT = "Really send %q to the %s channel?",
+-- Right-click menu
+L.SAVE_OPTION = "Save"
+L.ADD_OPTION = "Add"
+L.UPDATE_OPTION = "Update"
+L.RENAME_OPTION = "Rename"
+L.DELETE_OPTION = "Delete"
+L.SEND_OPTION = "Send To"
+L.SEND_TO_TARGET = "Target"
+L.SEND_TO_PLAYER = "Player"
+L.SEND_TO_INSTANCE = "Instance"
+L.SEND_TO_PARTY = "Party"
+L.SEND_TO_RAID = "Raid"
+L.SEND_TO_GUILD = "Guild"
+L.SEND_TO_OFFICER = "Officer"
+L.SEND_TO_CHANNEL = "Channel"
+L.CHANNEL_NAME_FORMAT = "%d. %s"
 
-	NOTE_RECEIVED_FORMAT = "Notebook added note %q from %s.",
+-- Popup dialogs
+L.ENTER_PLAYER_NAME_TEXT = "Enter name of player to send to:"
+L.ENTER_NEW_TITLE_TEXT = "Enter new title for note:"
+L.CONFIRM_REMOVE_FORMAT = "Really delete %q?"
+L.CONFIRM_UPDATE_FORMAT = "Really replace %q with the one from %s?"
+L.CONFIRM_SERVER_CHANNEL_FORMAT = "Really send %q to the %s channel?"
 
-	MONTHNAME_01 = FULLDATE_MONTH_JANUARY,
-	MONTHNAME_02 = FULLDATE_MONTH_FEBRUARY,
-	MONTHNAME_03 = FULLDATE_MONTH_MARCH,
-	MONTHNAME_04 = FULLDATE_MONTH_APRIL,
-	MONTHNAME_05 = FULLDATE_MONTH_MAY,
-	MONTHNAME_06 = FULLDATE_MONTH_JUNE,
-	MONTHNAME_07 = FULLDATE_MONTH_JULY,
-	MONTHNAME_08 = FULLDATE_MONTH_AUGUST,
-	MONTHNAME_09 = FULLDATE_MONTH_SEPTEMBER,
-	MONTHNAME_10 = FULLDATE_MONTH_OCTOBER,
-	MONTHNAME_11 = FULLDATE_MONTH_NOVEMBER,
-	MONTHNAME_12 = FULLDATE_MONTH_DECEMBER,
-}
+-- Slash commands
+L.CMD_HELP = "help"
+L.CMD_LIST = "list"
+L.CMD_SHOW = "show"
+L.CMD_HIDE = "hide"
+L.CMD_SEND = "send"
+L.CMD_OPTIONS = "options"
+L.CMD_DEBUGON = "debugon"
+L.CMD_DEBUGOFF = "debugoff"
+L.CMD_WELCOME = "welcome"
+L.CMD_STATUS = "status"
 
-------------------------------------------------------------------------
--- Slash commands and responses
-local NOTEBOOK_COMMANDS = {
-	-- Slash commands
-	COMMAND_HELP = "help",
-	COMMAND_LIST = "list",
-	COMMAND_SHOW = "show",
-	COMMAND_HIDE = "hide",
-	COMMAND_OPTIONS = "options",
-	COMMAND_DEBUGON = "debugon",
-	COMMAND_DEBUGOFF = "debugoff",
-	COMMAND_WELCOME = "welcome",
-	COMMAND_STATUS = "status",
+-- Slash command responses
+L.CMD_DEBUGON_CONFIRM = "Notebook debugging is enabled."
+L.CMD_DEBUGOFF_CONFIRM = "Notebook debugging is disabled."
+L.CMD_LIST_CONFIRM = "Notebook contains the following notes:"
+L.CMD_LIST_FORMAT = "- %s (%d characters, by %s, %s)"
+L.CMD_STATUS_FORMAT = "Notebook currently contains %d notes and is using %.0fkB of memory."
 
-	-- Slash command responses
-	COMMAND_DEBUGON_CONFIRM = "Notebook debugging is enabled.",
-	COMMAND_DEBUGOFF_CONFIRM = "Notebook debugging is disabled.",
-	COMMAND_LIST_CONFIRM = "Notebook contains the following notes:",
-	COMMAND_LIST_FORMAT = "- %s (%d characters, by %s, %s)",
-	COMMAND_STATUS_FORMAT = "Notebook currently contains %d notes and is using %.0fkB of memory.",
-
-	-- Error messages
-	ERROR_RENAME_NOT_UNIQUE_FORMAT = "You already have a note titled %q. Titles must be unique.",
-	ERROR_RENAME_EMPTY = "You cannot have an empty title.",
-	ERROR_SEND_COOLDOWN = "You cannot send another note just yet.",
-	ERROR_SEND_INVALID = "You must provide a valid note title and channel.",
-	ERROR_SEND_INVALID_NOTE = "Could not find a note titled %q.",
-	ERROR_SEND_EDITING = "You cannot send a note with unsaved changes.",
-	ERROR_SEND_RAID_LEADER = "You are not the raid leader or assistant.",
-	ERROR_SEND_NO_NAME = "You must enter a character name or BattleTag.",
-	ERROR_SEND_NO_CHANNEL = "You must enter a channel name.",
-	ERROR_SEND_INVALID_CHANNEL = "Could not find a channel %s.",
-	ERROR_SEND_UNKNOWN_CHANNEL = "%q is not a supported channel type.",
-}
+-- Error messages
+L.ERR_RENAME_NOT_UNIQUE_FORMAT = "You already have a note titled %q. Titles must be unique."
+L.ERR_RENAME_EMPTY = "You cannot have an empty title."
+L.ERR_SEND_COOLDOWN = "You cannot send another note just yet."
+L.ERR_SEND_INVALID = "You must provide a valid note title and channel."
+L.ERR_SEND_INVALID_NOTE = "Could not find a note titled %q."
+L.ERR_SEND_EDITING = "You cannot send a note with unsaved changes."
+L.ERR_SEND_RAID_LEADER = "You are not the raid leader or assistant."
+L.ERR_SEND_NO_NAME = "You must enter a character name or BattleTag."
+L.ERR_SEND_NO_CHANNEL = "You must enter a channel name."
+L.ERR_SEND_INVALID_CHANNEL = "Could not find a channel %s."
+L.ERR_SEND_UNKNOWN_CHANNEL = "%q is not a supported channel type."
 
 ------------------------------------------------------------------------
 -- Help text
-local NOTEBOOK_HELP = {
+
+-- Notebook.SLASH_COMMAND not needed for English
+
+Notebook.HELP_TEXT = {
 	"Use /notebook or /note with the following commands:",
-	"   " .. NOTEBOOK_COMMANDS.COMMAND_SHOW .. " - show Notebook",
-	"   " .. NOTEBOOK_COMMANDS.COMMAND_HIDE .. " - hide Notebook",
-	"   " .. NOTEBOOK_COMMANDS.COMMAND_STATUS .. " - report the status of Notebook",
-	"   " .. NOTEBOOK_COMMANDS.COMMAND_LIST .. " - list the notes in your Notebook",
-	"   " .. NOTEBOOK_COMMANDS.COMMAND_WELCOME .. " - restore the Welcome note",
-	"   " .. NOTEBOOK_COMMANDS.COMMAND_HELP .. " - show this help message",
+	"   " .. L.CMD_SHOW    .. " - show Notebook",
+	"   " .. L.CMD_HIDE    .. " - hide Notebook",
+	"   " .. L.CMD_STATUS  .. " - report the status of Notebook",
+	"   " .. L.CMD_LIST    .. " - list the notes in your Notebook",
+	"   " .. L.CMD_WELCOME .. " - restore the Welcome note",
+	"   " .. L.CMD_HELP    .. " - show this help message",
 	"Use the slash command without any additional commands, or bind a key in the Key Bindings menu, to toggle the Notebook window.",
 }
 
 ------------------------------------------------------------------------
 --	First timer's brief manual
 
-local NOTEBOOK_FIRST_TIME_NOTE = {
-	["title"] = "Welcome to Notebook!",
-	["author"] = "Cirk",
-	["date"] = "051224",
-	["description"] = [[Notebook allows you to write and keep track of notes on different topics and then share them with your guildmates, raid members, or even chat channels!  So if you usually use macros for raid instructions, loot rules, enchanting lists, and the like, Notebook might be for you!
+L.WELCOME_NOTE_TITLE = "Welcome to Notebook!"
+L.WELCOME_NOTE_DESCRIPTION = [[
+Notebook allows you to write and keep track of notes on different topics and then share them with your guildmates, raid members, or even chat channels!  So if you usually use macros for raid instructions, loot rules, enchanting lists, and the like, Notebook might be for you!
 
 To create a new Note, simply click on the New button and enter a title for the note.  Titles can be up to 60 characters long and can contain any characters you want to use.  But they must be unique - you can't have two Notes both titled "Things to do" for example.  (You could have "Things to do" and "Other things to do" instead though :)
 
@@ -156,14 +138,4 @@ Notebook will also automatically recognize Notes sent by other players, and will
 
 I hope you enjoy Notebook and find it useful!
 
--- Cirk of Doomhammer]],
-}
-
-------------------------------------------------------------------------
--- Export
-
-Notebook.NOTEBOOK_EM = NOTEBOOK_EM
-Notebook.NOTEBOOK_TEXT = NOTEBOOK_TEXT
-Notebook.NOTEBOOK_COMMANDS = NOTEBOOK_COMMANDS
-Notebook.NOTEBOOK_HELP = NOTEBOOK_HELP
-Notebook.NOTEBOOK_FIRST_TIME_NOTE = NOTEBOOK_FIRST_TIME_NOTE
+-- Cirk of Doomhammer]]

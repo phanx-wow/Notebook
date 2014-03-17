@@ -4,7 +4,7 @@
 ## Title: Notebook
 ## Title-ruRU: Блокнот
 ## Notes: Record and share notes in-game.
-## Notes-deDE: Schreibt und teilt Notizen im Spiel.
+## Notes-deDE: Speichert und teilt Notizen im Spiel.
 ## Notes-esES: Escribir y compartir notas en el juego.
 ## Notes-esMX: Escribir y compartir notas en el juego.
 ## Notes-ruRU: Позволяет создавать заметки и делится ими в игре.

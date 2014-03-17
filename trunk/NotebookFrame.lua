@@ -8,18 +8,14 @@
 ----------------------------------------------------------------------]]
 
 local NOTEBOOK, Notebook = ...
-
-local NOTEBOOK_TEXT = Notebook.NOTEBOOK_TEXT
-local NOTEBOOK_COMMANDS = Notebook.NOTEBOOK_COMMANDS
-local NOTEBOOK_HELP = Notebook.NOTEBOOK_HELP
-local NOTEBOOK_FIRST_TIME_NOTE = Notebook.NOTEBOOK_FIRST_TIME_NOTE
+local L = Notebook.L
 
 local NotebookFrame = CreateFrame("Frame", "NotebookFrame", UIParent)
 UIPanelWindows["NotebookFrame"] = { area = "left", pushable = 3, whileDead = 1, xoffset = -16, yoffset = 12 }
 tinsert(UISpecialFrames, "NotebookFrame")
+Notebook.Frame = NotebookFrame
 -- HideUIPanel(NotebookFrame)
 -- NotebookFrame:Hide()
-Notebook.Frame = NotebookFrame
 
 NotebookFrame:SetWidth(384)
 NotebookFrame:SetHeight(512)
@@ -31,8 +27,8 @@ NotebookFrame:SetMovable(true)
 NotebookFrame:SetScript("OnShow", function(self)
 	-- Set the frame title and "mine" tab tooltip with the player's name
 	local playerName = UnitName("player")
-	NotebookFrame.TitleText:SetFormattedText(NOTEBOOK_TEXT.FRAME_TITLE_FORMAT, playerName)
-	NotebookFrame.FilterTab2.tooltipText = format(NOTEBOOK_TEXT.MINE_TAB_TOOLTIP_FORMAT, playerName)
+	NotebookFrame.TitleText:SetFormattedText(L.FRAME_TITLE_FORMAT, playerName)
+	NotebookFrame.FilterTab2.tooltipText = format(L.MINE_TAB_TOOLTIP_FORMAT, playerName)
 	Notebook.Frame_UpdateList()
 end)
 
@@ -189,9 +185,9 @@ save:SetNormalFontObject(GameFontNormalSmall)
 save:SetHighlightFontObject(GameFontHighlightSmall)
 save:SetDisabledFontObject(GameFontDisableSmall)
 save:SetScript("OnClick", Notebook.Frame_SaveButtonOnClick)
-save:SetText(NOTEBOOK_TEXT.SAVE_BUTTON)
-save.tooltipText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
-save.newbieText = NOTEBOOK_TEXT.SAVE_BUTTON_TOOLTIP
+save:SetText(L.SAVE_BUTTON)
+save.tooltipText = L.SAVE_BUTTON_TOOLTIP
+save.newbieText = L.SAVE_BUTTON_TOOLTIP
 NotebookFrame.SaveButton = save
 
 ------------------------------------------------------------------------
@@ -205,9 +201,9 @@ cancel:SetNormalFontObject(GameFontNormalSmall)
 cancel:SetHighlightFontObject(GameFontHighlightSmall)
 cancel:SetDisabledFontObject(GameFontDisableSmall)
 cancel:SetScript("OnClick", Notebook.Frame_CancelButtonOnClick)
-cancel:SetText(NOTEBOOK_TEXT.CANCEL_BUTTON)
-cancel.tooltipText = NOTEBOOK_TEXT.CANCEL_BUTTON_TOOLTIP
-cancel.newbieText = NOTEBOOK_TEXT.CANCEL_BUTTON_TOOLTIP
+cancel:SetText(L.CANCEL_BUTTON)
+cancel.tooltipText = L.CANCEL_BUTTON_TOOLTIP
+cancel.newbieText = L.CANCEL_BUTTON_TOOLTIP
 NotebookFrame.CancelButton = cancel
 
 ------------------------------------------------------------------------
@@ -223,9 +219,9 @@ new:SetNormalFontObject(GameFontNormalSmall)
 new:SetHighlightFontObject(GameFontHighlightSmall)
 new:SetDisabledFontObject(GameFontDisableSmall)
 new:SetScript("OnClick", Notebook.Frame_NewButtonOnClick)
-new:SetText(NOTEBOOK_TEXT.NEW_BUTTON)
-new.tooltipText = NOTEBOOK_TEXT.NEW_BUTTON_TOOLTIP
-new.newbieText = NOTEBOOK_TEXT.NEW_BUTTON_TOOLTIP
+new:SetText(L.NEW_BUTTON)
+new.tooltipText = L.NEW_BUTTON_TOOLTIP
+new.newbieText = L.NEW_BUTTON_TOOLTIP
 
 ------------------------------------------------------------------------
 -- CAN SEND CHECKBOX
@@ -244,9 +240,9 @@ canSend:SetPoint("BOTTOMLEFT", 20, 81)
 canSend:SetSize(22, 22) -- default is 26
 canSend:SetHitRectInsets(0, -70, 0, 0)
 
-canSend:SetText(NOTEBOOK_TEXT.CHECK_SEND_BUTTON)
-canSend.tooltipOnText = NOTEBOOK_TEXT.CHECK_CAN_SEND_TOOLTIP
-canSend.tooltipOffText = NOTEBOOK_TEXT.CHECK_NOT_SEND_TOOLTIP
+canSend:SetText(L.CHECK_SEND_BUTTON)
+canSend.tooltipOnText = L.CHECK_CAN_SEND_TOOLTIP
+canSend.tooltipOffText = L.CHECK_NOT_SEND_TOOLTIP
 
 canSend:SetScript("OnEnter", function(self)
 	local text
@@ -279,7 +275,7 @@ canSend:SetScript("OnClick", function(self, button)
 
 	CloseDropDownMenus()
 
-	local ndata = Notebook.FindByID(NotebookFrame.selectedID)
+	local ndata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 	if ndata then
 		if ndata.send then
 			ndata.send = nil
@@ -316,8 +312,8 @@ filterTab1:SetScript("OnShow", tab_OnShow)
 filterTab1:SetScript("OnEnter", tab_OnEnter)
 filterTab1:SetScript("OnLeave", GameTooltip_Hide)
 filterTab1:SetScript("OnClick", tab_OnClick)
-filterTab1:SetText(NOTEBOOK_TEXT.ALL_TAB)
-filterTab1.tooltipText = NOTEBOOK_TEXT.ALL_TAB_TOOLTIP
+filterTab1:SetText(L.ALL_TAB)
+filterTab1.tooltipText = L.ALL_TAB_TOOLTIP
 PanelTemplates_SelectTab(filterTab1)
 NotebookFrame.FilterTab1 = filterTab1
 
@@ -328,7 +324,7 @@ filterTab2:SetScript("OnShow", tab_OnShow)
 filterTab2:SetScript("OnEnter", tab_OnEnter)
 filterTab2:SetScript("OnLeave", GameTooltip_Hide)
 filterTab2:SetScript("OnClick", tab_OnClick)
-filterTab2:SetText(NOTEBOOK_TEXT.MINE_TAB)
+filterTab2:SetText(L.MINE_TAB)
 PanelTemplates_DeselectTab(filterTab2)
 NotebookFrame.FilterTab2 = filterTab2
 
@@ -339,8 +335,8 @@ filterTab3:SetScript("OnShow", tab_OnShow)
 filterTab3:SetScript("OnEnter", tab_OnEnter)
 filterTab3:SetScript("OnLeave", GameTooltip_Hide)
 filterTab3:SetScript("OnClick", tab_OnClick)
-filterTab3:SetText(NOTEBOOK_TEXT.RECENT_TAB)
-filterTab3.tooltipText = NOTEBOOK_TEXT.RECENT_TAB_TOOLTIP
+filterTab3:SetText(L.RECENT_TAB)
+filterTab3.tooltipText = L.RECENT_TAB_TOOLTIP
 PanelTemplates_DeselectTab(filterTab3)
 NotebookFrame.FilterTab3 = filterTab3
 
