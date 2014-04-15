@@ -439,7 +439,7 @@ function Notebook:FindByTitle(title, known)
 	return nil
 end
 
-function Notebook:FindByID(id)
+function Notebook:FindNoteByID(id)
 	-- Returns the entry with the matching id, or nil if not found
 	if id then
 		for i = 1, #_notesList do
@@ -1106,7 +1106,7 @@ function Notebook.Frame_ListButtonOnClick(self, clicked)
 	local ndata = _notesList[self.nindex]
 	if NotebookFrame.selectedID ~= ndata.id then
 		if NotebookFrame.editing then
-			local pdata = Notebook:FindByID(NotebookFrame.selectedID)
+			local pdata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 			if pdata then
 				local text = NotebookFrame.EditBox:GetText()
 				if text ~= pdata.description then
@@ -1329,7 +1329,7 @@ function Notebook.Frame_SaveButtonOnClick(self, ndata)
 	CloseDropDownMenus()
 	if NotebookFrame.editing then
 		if type(ndata) ~= "table" then
-			ndata = Notebook:FindByID(NotebookFrame.selectedID)
+			ndata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 		end
 		if ndata then
 			Notebook:UpdateDescription(ndata, NotebookFrame.EditBox:GetText())
@@ -1349,7 +1349,7 @@ function Notebook.Frame_AddButtonOnClick(self, ndata)
 	CloseDropDownMenus()
 	if not NotebookFrame.editing then
 		if type(ndata) ~= "table" then
-			ndata = Notebook:FindByID(NotebookFrame.selectedID)
+			ndata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 		end
 		if ndata then
 			ndata.known = true
@@ -1367,7 +1367,7 @@ function Notebook.Frame_UpdateButtonOnClick(self, ndata)
 	-- updating an existing note.
 	CloseDropDownMenus()
 	if type(ndata) ~= "table" then
-		ndata = Notebook:FindByID(NotebookFrame.selectedID)
+		ndata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 	end
 	if ndata then
 		local dialogFrame = StaticPopup_Show("NOTEBOOK_UPDATE_CONFIRM", ndata.title, ndata.author)
@@ -1381,7 +1381,7 @@ function Notebook.Frame_CancelButtonOnClick(self)
 	-- Restore the last saved contents of the current note
 	CloseDropDownMenus()
 	if NotebookFrame.editing then
-		local ndata = Notebook:FindByID(NotebookFrame.selectedID)
+		local ndata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 		if ndata then
 			Notebook.Frame_SetDescriptionText(ndata.description, ndata.known)
 			NotebookFrame.editing = nil
@@ -1418,11 +1418,11 @@ function Notebook.Frame_TabButtonOnClick(id)
 	local filterMode = _filterBy
 	local showText = nil
 	local scrollOffset = nil
-	local ndata = Notebook:FindByID(NotebookFrame.selectedID)
+	local ndata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 	if ndata then
 		NotebookFrame.lastSelectedID = NotebookFrame.selectedID
 	else
-		ndata = Notebook:FindByID(NotebookFrame.lastSelectedID)
+		ndata = Notebook:FindNoteByID(NotebookFrame.lastSelectedID)
 	end
 
 	if id == 1 and _filterBy ~= L.ALL_TAB then
@@ -1460,7 +1460,7 @@ function Notebook.Frame_TabButtonOnClick(id)
 		if showText then
 			if NotebookFrame.selectedID ~= ndata.id then
 				if NotebookFrame.editing then
-					local pdata = Notebook:FindByID(NotebookFrame.selectedID)
+					local pdata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 					if pdata then
 						local text = NotebookFrame.EditBox:GetText()
 						if text ~= pdata.description then
@@ -1483,7 +1483,7 @@ function Notebook.Frame_TabButtonOnClick(id)
 			end
 		else
 			if NotebookFrame.editing then
-				local pdata = Notebook:FindByID(NotebookFrame.selectedID)
+				local pdata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 				if pdata then
 					local text = NotebookFrame.EditBox:GetText()
 					if text ~= pdata.description then
@@ -1671,7 +1671,7 @@ function Notebook.Frame_TextChanged(self)
 		-- cancel buttons.  Note that we don't need to update the filter list
 		-- here because if the note wasn't already on the list then it
 		-- wouldn't have been editable.
-		local ndata = Notebook:FindByID(NotebookFrame.selectedID)
+		local ndata = Notebook:FindNoteByID(NotebookFrame.selectedID)
 		if ndata then
 			-- First work around the timing of setting focus and getting the
 			-- text changed notification by seeing if the description is ""
@@ -1740,7 +1740,7 @@ function Notebook:HandlePopupInput(type, data, text)
 		-- Dialog for accepting player name
 		text = gsub("%s", "") -- remove spaces
 		if text ~= "" then
-			local ndata = Notebook:FindByID(data)
+			local ndata = Notebook:FindNoteByID(data)
 			if ndata then
 				local presenceID = GetAutoCompletePresenceID(text)
 				--print("HandlePopupAccept", type, text, presenceID)
@@ -1760,7 +1760,7 @@ function Notebook:HandlePopupInput(type, data, text)
 		if text ~= "" then
 			if data then
 				-- Rename of note
-				local ndata = Notebook:FindByID(data)
+				local ndata = Notebook:FindNoteByID(data)
 				if ndata and (text ~= ndata.title) then
 					if not Notebook:FindByTitle(text) then
 						Notebook:Rename(ndata, text)
@@ -1792,7 +1792,7 @@ function Notebook:HandlePopupInput(type, data, text)
 			Notebook:Error(L.ERR_RENAME_EMPTY)
 		end
 	elseif type == "CONFIRM" then
-		local ndata = Notebook:FindByID(data)
+		local ndata = Notebook:FindNoteByID(data)
 		if ndata then
 			Notebook:RemoveNoteByID(ndata.id)
 			Notebook:UpdateNotKnown()
@@ -1805,7 +1805,7 @@ function Notebook:HandlePopupInput(type, data, text)
 			Notebook.Frame_UpdateList()
 		end
 	elseif type == "UPDATE" then
-		local ndata = Notebook:FindByID(data)
+		local ndata = Notebook:FindNoteByID(data)
 		if ndata then
 			local pdata = Notebook:FindByTitle(ndata.title, true)
 			if pdata then
@@ -1826,7 +1826,7 @@ function Notebook:HandlePopupInput(type, data, text)
 		end
 	elseif type == "SERVER" then
 		if data then
-			local ndata = Notebook:FindByID(data.id)
+			local ndata = Notebook:FindNoteByID(data.id)
 			if ndata then
 				Notebook:SendNote(ndata, "CHANNEL", tonumber(data.channelNum))
 			end
