@@ -122,7 +122,7 @@ local _firstTimeNote = {
 	title = L.WELCOME_NOTE_TITLE,
 	description = L.WELCOME_NOTE_DESCRIPTION,
 	author = "Cirk",
-	date = "051224",
+	date = "05-12-24",
 }
 
 ------------------------------------------------------------------------
