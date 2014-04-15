@@ -2,6 +2,9 @@
 ## Version: 5.4.7.wowi:revision
 
 ## Title: Notebook
+## Title-deDE: Notizbuch
+## Title-esES: Cuaderno
+## Title-esMX: Cuaderno
 ## Title-ruRU: Блокнот
 ## Notes: Record and share notes in-game.
 ## Notes-deDE: Speichert und teilt Notizen im Spiel.
