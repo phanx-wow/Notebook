@@ -45,7 +45,7 @@ L.DETAILS_NOT_KNOWN_TEXT = "- no se guarda"
 L.DETAILS_SENT_FORMAT = "- enviado %s"
 L.TITLE_CHANGE_NOT_SAVED = "*"
 
-L.NOTE_RECEIVED_FORMAT = "Notebook añadió nota %q de %s."
+L.NOTE_RECEIVED_FORMAT = "Notebook añadió nota “%s” de %s."
 
 -- Right-click menu
 L.SAVE_OPTION = "Guardar"
@@ -67,9 +67,9 @@ L.CHANNEL_NAME_FORMAT = "%d. %s"
 -- Popup dialogs
 L.ENTER_PLAYER_NAME_TEXT = "Escribe el nombre del jugardor al que enviar:"
 L.ENTER_NEW_TITLE_TEXT = "Escribe un nuevo título para esta nota:"
-L.CONFIRM_REMOVE_FORMAT = "¿Seguro que desea borrar %q?"
-L.CONFIRM_UPDATE_FORMAT = "¿Seguro que desea reemplazar %q con la versión de %s?"
-L.CONFIRM_SERVER_CHANNEL_FORMAT = "¿Seguro que desea enviar %q al canal %s?"
+L.CONFIRM_REMOVE_FORMAT = "¿Seguro que desea borrar “%s”?"
+L.CONFIRM_UPDATE_FORMAT = "¿Seguro que desea reemplazar “%s” con la versión de %s?"
+L.CONFIRM_SERVER_CHANNEL_FORMAT = "¿Seguro que desea enviar “%s” al canal %s?"
 
 -- Slash commands
 L.CMD_HELP = "ayuda"
@@ -91,17 +91,17 @@ L.CMD_LIST_FORMAT = "- %s (%d caracteres, de %s, %s)"
 L.CMD_STATUS_FORMAT = "Notebook contiene %d notas y se utiliza %.0fkB de memoria."
 
 -- Error messages
-L.ERR_RENAME_NOT_UNIQUE_FORMAT = "Ya tienes una nota titulado %q. Títulos deben ser únicos."
+L.ERR_RENAME_NOT_UNIQUE_FORMAT = "Ya tienes una nota titulado “%s”. Títulos deben ser únicos."
 L.ERR_RENAME_EMPTY = "Títulos no pueden estar vacíos."
 L.ERR_SEND_COOLDOWN = "No puedes enviar otra nota todavía."
 L.ERR_SEND_INVALID = "Debes introducir un título y un canal valido."
-L.ERR_SEND_INVALID_NOTE = "No se puede encontrar una nota %q."
+L.ERR_SEND_INVALID_NOTE = "No se puede encontrar una nota “%s”."
 L.ERR_SEND_EDITING = "No puedes enviar una nota con cambios sin guardar."
 L.ERR_SEND_RAID_LEADER = "No estás el líder o un asistente de la banda."
 L.ERR_SEND_NO_NAME = "Debes indroducir un nombre de personaje o un BattleTag."
 L.ERR_SEND_NO_CHANNEL = "Debes introducir un nombre de canal."
-L.ERR_SEND_INVALID_CHANNEL = "No se puede encontrar un canal %s."
-L.ERR_SEND_UNKNOWN_CHANNEL = "%q no es un tipo compatible de canal."
+L.ERR_SEND_INVALID_CHANNEL = "No se puede encontrar un canal “%s”."
+L.ERR_SEND_UNKNOWN_CHANNEL = "“%s” no es un tipo compatible de canal."
 
 ------------------------------------------------------------------------
 -- Help text
@@ -120,21 +120,21 @@ Notebook.NOTEBOOK_HELP = {
 }
 
 ------------------------------------------------------------------------
---	First timer's brief manual
+--	First timer’s brief manual
 
 L.WELCOME_NOTE_TITLE = "Bienvenido a Notebook!"
 L.WELCOME_NOTE_DESCRIPTION = [[
 Notebook te permite escribar y guardar notas sobre diversos temas, y compartirlas con tus amigos, tu grupo, tu hermandad, y los canales de chat! Si normalmente utiliza macros para dar instrucciones al grupo, explicar explicar las reglas de saqueo, recordar listas de encantamientos, o propósitos similares -- Notebook puede ser útil para ti!
 
-Para crearon una nueva nota, sólo clic en la boton "Crear" y escriba un título para la nota. Títulos pueden tener hasta 60 caracteres de largo, y pueden incluyir cualqier carácter. Pero, cada título tiene que ser único -- no puedes tener dos notas con el mismo título.
+Para crearon una nueva nota, sólo clic en la boton “Crear” y escriba un título para la nota. Títulos pueden tener hasta 60 caracteres de largo, y pueden incluyir cualqier carácter. Pero, cada título tiene que ser único -- no puedes tener dos notas con el mismo título.
 
 Después de crear la nota, puedes editarlo y guardarlo en cualquier momento. Notas pueden tener hasta 4096 caracters de largo. Sí necesitas más espacio, simplemente crear otra nota! No hay un límite en el número de notas que puedes tener.
 
-Las funcionas más interesantes de Notebook son disponibles haciendo clic derecho sobre el título de una nota en la lista de notas. Esto aparecerá un menú con muchas opciones, incluyendo opciones para enviar la nota a otros jugadores en tu grupo, banda, o hermandad, por susurro, o por un canal de chat. (Antes de puedes enviar una nota, debes activar la opción "Puede enviarse" para esa nota específica, en el abajo del marco.)
+Las funcionas más interesantes de Notebook son disponibles haciendo clic derecho sobre el título de una nota en la lista de notas. Esto aparecerá un menú con muchas opciones, incluyendo opciones para enviar la nota a otros jugadores en tu grupo, banda, o hermandad, por susurro, o por un canal de chat. (Antes de puedes enviar una nota, debes activar la opción “Puede enviarse” para esa nota específica, en el abajo del marco.)
 
 Despúes de enviar una nota, debes esperar unos segundos antes de poder enviar otras. Recuerde, al igual que con los macros, es tu responsabilidad para evitar molestar a otros jugadores por el abuso de esta función!
 
-Notebook reconocerá automáticamente las notas enviadas por otros jugadores, y las mostrará en la pestaña "Recientes" junto con las notas que ha enviado en esta sesión. Podrás guardar estas notas a su propia lista, o actualizar tu copia si ya tenías. (Si la nota no ha cambiado, verás tu propria noa existente allí.)
+Notebook reconocerá automáticamente las notas enviadas por otros jugadores, y las mostrará en la pestaña “Recientes” junto con las notas que ha enviado en esta sesión. Podrás guardar estas notas a su propia lista, o actualizar tu copia si ya tenías. (Si la nota no ha cambiado, verás tu propria noa existente allí.)
 
 Espero que disfrutes de Notebook, y es te útil!
 
