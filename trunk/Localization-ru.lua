@@ -45,7 +45,7 @@ L.DETAILS_NOT_KNOWN_TEXT = "- Не сохранено"
 L.DETAILS_SENT_FORMAT = "- Отправить %s"
 L.TITLE_CHANGE_NOT_SAVED = "*"
 
-L.NOTE_RECEIVED_FORMAT = "В Блокнот Добавлена Заметка %q от %s"
+L.NOTE_RECEIVED_FORMAT = "В Блокнот Добавлена Заметка “%s” от %s"
 
 -- Right-click menu
 L.SAVE_OPTION = "Сохранить"
@@ -67,9 +67,9 @@ L.CHANNEL_NAME_FORMAT = "%d. %s"
 -- Popup dialogs
 L.ENTER_PLAYER_NAME_TEXT = "Введите имя игрока что бы отправить:"
 L.ENTER_NEW_TITLE_TEXT = "Введите название новой заметки:"
-L.CONFIRM_REMOVE_FORMAT = "Вы действительно хотите удалить %q?"
-L.CONFIRM_UPDATE_FORMAT = "Хоите заменить %q заметку от %s?"
-L.CONFIRM_SERVER_CHANNEL_FORMAT = "Хотите отправить %q в канал %s ?"
+L.CONFIRM_REMOVE_FORMAT = "Вы действительно хотите удалить “%s”?"
+L.CONFIRM_UPDATE_FORMAT = "Хоите заменить “%s” заметку от %s?"
+L.CONFIRM_SERVER_CHANNEL_FORMAT = "Хотите отправить “%s” в канал %s ?"
 
 -- Slash commands
 C.CMD_HELP = "помощь"
@@ -91,17 +91,17 @@ C.CMD_DEBUGOFF_CONFIRM = "Отладка Блокнота Выключена"
 C.CMD_STATUS_FORMAT = "Блокнот содержит %d заметок и они занимают %.0fkB памяти"
 
 -- Error messages
---C.ERR_RENAME_NOT_UNIQUE_FORMAT = "You already have a note titled %q. Titles must be unique."
+--C.ERR_RENAME_NOT_UNIQUE_FORMAT = "You already have a note titled “%s”. Titles must be unique."
 --C.ERR_RENAME_EMPTY = "You cannot have an empty title."
 --C.ERR_SEND_COOLDOWN = "You cannot send another note just yet."
 --C.ERR_SEND_INVALID = "You must provide a valid note title and channel."
---C.ERR_SEND_INVALID_NOTE = "Could not find a note titled %q."
+--C.ERR_SEND_INVALID_NOTE = "Could not find a note titled “%s”."
 --C.ERR_SEND_EDITING = "You cannot send a note with unsaved changes."
 --C.ERR_SEND_RAID_LEADER = "You are not the raid leader or assistant."
 --C.ERR_SEND_NO_NAME = "You must enter a character name or BattleTag."
 --C.ERR_SEND_NO_CHANNEL = "You must enter a channel name."
---C.ERR_SEND_INVALID_CHANNEL = "Could not find a channel %s."
---C.ERR_SEND_UNKNOWN_CHANNEL = "%q is not a supported channel type."
+--C.ERR_SEND_INVALID_CHANNEL = "Could not find a channel “%s”."
+--C.ERR_SEND_UNKNOWN_CHANNEL = "“%s” is not a supported channel type."
 
 ------------------------------------------------------------------------
 -- Help text

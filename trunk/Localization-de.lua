@@ -45,7 +45,7 @@ L.DETAILS_NOT_KNOWN_TEXT = "- nicht gespeichert"
 L.DETAILS_SENT_FORMAT = "- gesendet %s"
 L.TITLE_CHANGE_NOT_SAVED = "*"
 
-L.NOTE_RECEIVED_FORMAT = "Notebook hat die Notiz %q von %s hinzugefügt."
+L.NOTE_RECEIVED_FORMAT = "Notebook hat die Notiz „%s“ von %s hinzugefügt."
 
 -- Right-click menu
 L.SAVE_OPTION = "Spiechern"
@@ -67,9 +67,9 @@ L.CHANNEL_NAME_FORMAT = "%d. %s"
 -- Popup dialogs
 L.ENTER_PLAYER_NAME_TEXT = "Gebt den Spielername ein, denen diese Notiz senden:"
 L.ENTER_NEW_TITLE_TEXT = "Gebt einen neuen Name für dieser Notiz ein:"
-L.CONFIRM_REMOVE_FORMAT = "Wollt Ihr wirklich die Notiz %q dauerhaft löschen?"
-L.CONFIRM_UPDATE_FORMAT = "Wollt Ihr wirklich die Notiz %q durch der Version von %s ersetzen?"
-L.CONFIRM_SERVER_CHANNEL_FORMAT = "Wollt Ihr wirklich die Notiz %q zu dem Channel %s senden?"
+L.CONFIRM_REMOVE_FORMAT = "Wollt Ihr wirklich die Notiz „%s“ dauerhaft löschen?"
+L.CONFIRM_UPDATE_FORMAT = "Wollt Ihr wirklich die Notiz „%s“ durch der Version von %s ersetzen?"
+L.CONFIRM_SERVER_CHANNEL_FORMAT = "Wollt Ihr wirklich die Notiz „%s“ zu dem Channel %s senden?"
 
 -- Slash commands
 L.CMD_HELP = "hilf"
@@ -91,17 +91,17 @@ L.CMD_LIST_FORMAT = " - %s (%d Zeichen, von %s, %s)"
 L.CMD_STATUS_FORMAT = "Notebook enthält %d Noitzen, und benutzt %.0fkB Spiecher."
 
 -- Error messages
-L.ERR_RENAME_NOT_UNIQUE_FORMAT = "Ihr habt bereits eine Notiz von dem Namen %q. Namen müssen einzigartig sein."
+L.ERR_RENAME_NOT_UNIQUE_FORMAT = "Ihr habt bereits eine Notiz von dem Namen „%s“. Namen müssen einzigartig sein."
 L.ERR_RENAME_EMPTY = "Namen dürfen nicht leer sein."
 L.ERR_SEND_COOLDOWN = "Ihr dürft eine weitere Notiz noch nicht senden."
 L.ERR_SEND_INVALID = "Ihr müsst eine gültige Notiz und Channel eingeben."
-L.ERR_SEND_INVALID_NOTE = "Notiz %q nicht gefunden."
+L.ERR_SEND_INVALID_NOTE = "Notiz „%s“ nicht gefunden."
 L.ERR_SEND_EDITING = "Ihr dürft eine Notiz mit nicht gespeicherten Änderungen nicht senden."
 L.ERR_SEND_RAID_LEADER = "Ihr seid nicht der Schlachtzugsleiter oder Assistent."
 L.ERR_SEND_NO_NAME = "Ihr müsst einen Charakternamen oder BattleTag eingeben."
 L.ERR_SEND_NO_CHANNEL = "Ihr müsst einen Channelnamen eingeben."
-L.ERR_SEND_INVALID_CHANNEL = "Channel %s nicht gefunden."
-L.ERR_SEND_UNKNOWN_CHANNEL = "%q ist kein unterstützter Chatnachrichtentyp."
+L.ERR_SEND_INVALID_CHANNEL = "Channel „%s“ nicht gefunden."
+L.ERR_SEND_UNKNOWN_CHANNEL = "„%s“ ist kein unterstützter Chatnachrichtentyp."
 
 ------------------------------------------------------------------------
 -- Help text
@@ -126,15 +126,15 @@ L.WELCOME_NOTE_TITLE = "Wilkommen in Notebook!"
 L.WELCOME_NOTE_DESCRIPTION = [[
 Mit Notebook kann man viele Notizen im Spiel schreiben und spiechern, und sie zu die Freunde, Gruppe, Gilde und Chat-Kanäle senden. Wenn man normalerweise Makros benutzte, um Anweisung die Gruppe zu geben, oder Listen von Gegenständte zu führen -- Notebook könnte nützlich sein!
 
-Um eine neue Notiz zu schaffen, einfach klickt auf den Button "Schaffen" und schreibt einen Namen für der Notiz. Namen können bis zu 60 Zeichen lang sein, und können beliebige Zeichen beinhalten. Jedoch müssen jeder Name einzigartich sein -- man kann nicht mehrere Noten mit dem gleichen Namen haben.
+Um eine neue Notiz zu schaffen, einfach klickt auf den Button „Schaffen“ und schreibt einen Namen für der Notiz. Namen können bis zu 60 Zeichen lang sein, und können beliebige Zeichen beinhalten. Jedoch müssen jeder Name einzigartich sein -- man kann nicht mehrere Noten mit dem gleichen Namen haben.
 
 Nach der Schaffung einer Notiz kann man sie jederzeit ändern. Notizen können bis zu 4096 Zeichen lang sein. Wenn man mehr Platz benötigt, kann eine weitere Notiz einfach geschaffen werden. Man kann beliebig viele Notizen haben -- es gibt kein Limit!
 
-Die interessanteren Funktionen von Notebook können durch Rechtsklick auf dem Name einer Notiz gefunden werden. Bei diesem Menü kann man die Notiz zu anderen Spielern senden, obwohl muss man zuerst die Option "Sendbare" für die individuelle Notiz an der Unterseite der Fenster aktivieren.
+Die interessanteren Funktionen von Notebook können durch Rechtsklick auf dem Name einer Notiz gefunden werden. Bei diesem Menü kann man die Notiz zu anderen Spielern senden, obwohl muss man zuerst die Option „Sendbare“ für die individuelle Notiz an der Unterseite der Fenster aktivieren.
 
 Nach dem Senden einer Notiz muss man einige Sekunden warten, bevor es möglich wird, weitere Notizen senden. Erinnert Euch -- wie bei Makros, es liegt in Euer Verantwortung, um andere Spieler durch diese Funktion nicht spammen!
 
-Notebook speichert automatisch die Notizen, die von anderen Spielern empfangen werden, und zeigt sie in dem "Kürzlich"-Fach zusammen mit den Notizen, die Ihr in dieser Sitzung gesendet habt. Bei diesem Fach könnt Ihr diesen Notizen in eiginer Liste hinzufügen, oder Eure eigene Note zu aktualisieren.
+Notebook speichert automatisch die Notizen, die von anderen Spielern empfangen werden, und zeigt sie in dem „Kürzlich“-Fach zusammen mit den Notizen, die Ihr in dieser Sitzung gesendet habt. Bei diesem Fach könnt Ihr diesen Notizen in eiginer Liste hinzufügen, oder Eure eigene Note zu aktualisieren.
 
 Ich hoffe, Ihr erfreut über Notebook seid, und das nützlich findet!
 

@@ -14,11 +14,11 @@ Notebook.L = L
 
 BINDING_NAME_NOTEBOOK_PANEL = "Toggle Notebook"
 
-L.FRAME_TITLE_FORMAT = "%s's Notebook"
+L.FRAME_TITLE_FORMAT = "%s’s Notebook"
 L.ALL_TAB = "All"
 L.ALL_TAB_TOOLTIP = "All notes"
 L.MINE_TAB = "Mine"
-L.MINE_TAB_TOOLTIP_FORMAT = "%s's notes"
+L.MINE_TAB_TOOLTIP_FORMAT = "%s’s notes"
 L.KNOWN_TAB = "Saved"
 L.KNOWN_TAB_TOOLTIP = "Saved notes only"
 L.RECENT_TAB = "Recent"
@@ -45,7 +45,7 @@ L.DETAILS_NOT_KNOWN_TEXT = "- not saved"
 L.DETAILS_SENT_FORMAT = "- sent %s"
 L.TITLE_CHANGE_NOT_SAVED = "*"
 
-L.NOTE_RECEIVED_FORMAT = "Notebook added note %q from %s."
+L.NOTE_RECEIVED_FORMAT = "Notebook added note “%s” from %s."
 
 -- Right-click menu
 L.SAVE_OPTION = "Save"
@@ -67,9 +67,9 @@ L.CHANNEL_NAME_FORMAT = "%d. %s"
 -- Popup dialogs
 L.ENTER_PLAYER_NAME_TEXT = "Enter name of player to send to:"
 L.ENTER_NEW_TITLE_TEXT = "Enter new title for note:"
-L.CONFIRM_REMOVE_FORMAT = "Really delete %q?"
-L.CONFIRM_UPDATE_FORMAT = "Really replace %q with the one from %s?"
-L.CONFIRM_SERVER_CHANNEL_FORMAT = "Really send %q to the %s channel?"
+L.CONFIRM_REMOVE_FORMAT = "Really delete “%s”?"
+L.CONFIRM_UPDATE_FORMAT = "Really replace “%s” with the one from %s?"
+L.CONFIRM_SERVER_CHANNEL_FORMAT = "Really send “%s” to the %s channel?"
 
 -- Slash commands
 L.CMD_HELP = "help"
@@ -91,17 +91,17 @@ L.CMD_LIST_FORMAT = "- %s (%d characters, by %s, %s)"
 L.CMD_STATUS_FORMAT = "Notebook currently contains %d notes and is using %.0fkB of memory."
 
 -- Error messages
-L.ERR_RENAME_NOT_UNIQUE_FORMAT = "You already have a note titled %q. Titles must be unique."
+L.ERR_RENAME_NOT_UNIQUE_FORMAT = "You already have a note titled “%s”. Titles must be unique."
 L.ERR_RENAME_EMPTY = "You cannot have an empty title."
 L.ERR_SEND_COOLDOWN = "You cannot send another note just yet."
 L.ERR_SEND_INVALID = "You must provide a valid note title and channel."
-L.ERR_SEND_INVALID_NOTE = "Could not find a note titled %q."
+L.ERR_SEND_INVALID_NOTE = "Could not find a note titled “%s”."
 L.ERR_SEND_EDITING = "You cannot send a note with unsaved changes."
 L.ERR_SEND_RAID_LEADER = "You are not the raid leader or assistant."
 L.ERR_SEND_NO_NAME = "You must enter a character name or BattleTag."
 L.ERR_SEND_NO_CHANNEL = "You must enter a channel name."
-L.ERR_SEND_INVALID_CHANNEL = "Could not find a channel %s."
-L.ERR_SEND_UNKNOWN_CHANNEL = "%q is not a supported channel type."
+L.ERR_SEND_INVALID_CHANNEL = "Could not find a channel “%s”."
+L.ERR_SEND_UNKNOWN_CHANNEL = "“%s” is not a supported channel type."
 
 ------------------------------------------------------------------------
 -- Help text
