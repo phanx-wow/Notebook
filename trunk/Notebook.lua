@@ -1,8 +1,9 @@
 --[[--------------------------------------------------------------------
 	Notebook
-	Allows you to record and share notes in-game
+	Allows you to record and share notes in-game.
 	Written by Cirk of Doomhammer, 2005-2009
 	Updated by Phanx with permission, 2012-2014
+	Do not redistribute. See accompanying LICENSE file for details.
 	http://www.wowinterface.com/downloads/info4544-Notebook
 	http://www.curse.com/addons/wow/notebook
 ----------------------------------------------------------------------]]
@@ -30,7 +31,7 @@ NOTEBOOK_LIST_BUTTON_HEIGHT = 16			-- height of each button in list frame
 
 local NOTEBOOK_CHANNEL_VALUE_FORMAT = "%s:%d:%s"
 local NOTEBOOK_CHANNEL_VALUE_FIND = "(.+):(%d+):(.+)"
-local NOTEBOOK_MAX_LINE_LENGTH = 80			-- maximum characters in one line
+local NOTEBOOK_MAX_LINE_LENGTH = 240		-- maximum characters in one line
 local NOTEBOOK_MAX_NUM_LINES = 64			-- maximum number of lines sent from a note
 local NOTEBOOK_NEW_LINE = "\n"				-- newline character
 local NOTEBOOK_GETDATE_FORMAT = "%y-%m-%d"	-- see strftime
