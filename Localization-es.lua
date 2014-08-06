@@ -1,8 +1,9 @@
 --[[--------------------------------------------------------------------
 	Notebook
-	Allows you to record and share notes in-game
+	Allows you to record and share notes in-game.
 	Written by Cirk of Doomhammer, 2005-2009
 	Updated by Phanx with permission, 2012-2014
+	Do not redistribute. See accompanying LICENSE file for details.
 	http://www.wowinterface.com/downloads/info4544-Notebook
 	http://www.curse.com/addons/wow/notebook
 ----------------------------------------------------------------------]]
