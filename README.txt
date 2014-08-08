@@ -1,11 +1,8 @@
 Notebook
 ============
 
-	Written by Cirk of Doomhammer, 2005-2009
-	Updated by Phanx with permission, 2012-2014
-	Do not redistribute. See accompanying LICENSE file for details.
-	http://www.wowinterface.com/downloads/info4544-Notebook
-	http://www.curse.com/addons/wow/notebook
+Download from [WoWInterface](http://www.wowinterface.com/downloads/info4544-Notebook.html)
+or [Curse](http://www.curse.com/addons/wow/notebook).
 
 
 Description
@@ -81,24 +78,31 @@ update your note with the contents of the received note by clicking the
 Any received notes you have not saved will be lost on logout.
 
 
-Bug reports, feature requests, questions, and comments
-----------------------------------------------------------
+History & Credits
+---------------------
 
-Please post a comment on the WoWInterface download page. If you are
-reporting a bug, please include the following information:
+* Cirk of Doomhammer EU -- original author, 2005-2006, 2008
+* Kortanis -- maintainer, 2007
+* Phanx -- maintainer, 2009-present
 
-* Notebook version number from the Notebook.toc file
-* WoW version, region, and language from the WoW login screen
-* Description of the bug, including what you were doing when it happened
-* Whether the bug still happens when all other addons are disabled
-* Exact text of the first related error message, if any,
-  ***WITHOUT*** any lists of local variables or installed addons
 
-If you need to contact me privately for some other reason, you can email
-me at <addons@phanx.net> or send a private message to Phanx on either
-download site.
+Feedback
+-----------
 
-Please do not use email or PMs to report addon bugs, request features,
-ask for help with an addon, or ask for code help. I do not provide
-private support or tutoring of any kind, and will not reply to such
-messages. Post a comment, ticket, or forum thread instead!
+Post a ticket on either download site, or a comment on WoWInterface.
+
+If you are reporting a bug, please include directions I can follow to
+reproduce the bug, whether it still happens when all other addons are
+disabled, and the exact text of the related error message (if any) from 
+[BugSack](http://www.wowinterface.com/downloads/info5995-BugSack.html).
+
+If you need to contact me privately, you can send me a private message
+on either download site, or email me at <addons@phanx.net>.
+
+
+License
+----------
+
+Copyright (c) 2005-2008 Cirk, 2009-2014 Phanx. All rights reserved.  
+See the accompanying LICENSE file for information about the conditions
+under which redistribution and modification may be allowed.
