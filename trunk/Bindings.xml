@@ -1,5 +1,5 @@
 <Bindings>
-	<Binding name="NOTEBOOK_PANEL" header="NOTEBOOK_TITLE">
+	<Binding name="NOTEBOOK_PANEL" header="NOTEBOOK_TITLE" header="ADDONS">
 		ToggleFrame(NotebookFrame)
 	</Binding>
 </Bindings>
