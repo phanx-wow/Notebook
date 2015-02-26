@@ -2,7 +2,7 @@
 	Notebook
 	Allows you to record and share notes in-game.
 	Copyright (c) 2005-2008 Cirk of Doomhammer EU. All rights reserved.
-	Copyright (c) 2012-2014 Phanx <addons@phanx.net>. All rights reserved.
+	Copyright (c) 2012-2015 Phanx <addons@phanx.net>. All rights reserved.
 	http://www.wowinterface.com/downloads/info4544-Notebook.html
 	http://www.curse.com/addons/wow/notebook
 	https://github.com/Phanx/Notebook
