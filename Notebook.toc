@@ -1,4 +1,4 @@
-## Interface: 60100
+## Interface: 60200
 ## Version: @project-version@
 
 ## Title: Notebook
@@ -13,12 +13,17 @@
 ## X-Credits: Джоан-Подземье (ruRU localization)
 ## X-Website: http://www.wowinterface.com/downloads/info4544-Notebook.html
 
-## SavedVariables: NotebookState
+## SavedVariables: NotebookState, NotebookNotes
 
-Localization-en.lua
-Localization-de.lua
-Localization-es.lua
-Localization-ru.lua
+Libs\AddonStub.lua
 
-Notebook.lua
-NotebookFrame.lua
+Core.lua
+Frame.lua
+
+# Localization-en.lua
+# Localization-de.lua
+# Localization-es.lua
+# Localization-ru.lua
+
+# Notebook.lua
+# NotebookFrame.lua

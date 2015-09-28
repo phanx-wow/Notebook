@@ -1,3 +1,7 @@
+### Version 6.2.2.11
+
+* Rewritten from scratch!
+
 ### Version 6.1.0.10
 
 * Updated for WoW 6.1

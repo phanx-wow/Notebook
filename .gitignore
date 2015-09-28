@@ -4,10 +4,9 @@
 *.bat
 *.ods
 .svn/
-Libs/
 
 # Windows garbage ----------------------------------------------------------#
 
 Desktop.ini
-ehthumbs.db
+ethumbs.db
 Thumbs.db
