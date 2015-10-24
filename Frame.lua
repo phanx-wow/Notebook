@@ -22,38 +22,141 @@ local LIST_BUTTON_HEIGHT = 16
 ------------------------------------------------------------------------
 -- State variables
 
-local selectedNoteIndex
+local selectedNote
+
+------------------------------------------------------------------------
+-- Upvalues
+
+local editBox, listButtons
 
 ------------------------------------------------------------------------
 -- Update the frame
 
-function Notebook:UpdateFrame()
+function Notebook:UpdateFrame(offset, autoScroll)
+	-- Don't use self in here, as it can be Notebook or NotebookFrame
+	-- depending on how this got called.
 	if not NotebookFrame:IsShown() then return end
-	self:Print("UpdateFrame")
+	Notebook:Print("UpdateFrame")
 
-	-- TODO
-	-- account for scroll offset
-	-- update editbox/textarea
-	-- filter tabs
+	-- TODO: filter stuff
+	local numNotes = #Notebook.sortedTitles
+	local currentOffset = FauxScrollFrame_GetOffset(NotebookFrame.listScrollFrame)
+	if not offset then
+		offset = currentOffset
+	end
+	if offset ~= currentOffset then
+		FauxScrollFrame_SetOffset(NotebookFrame.listScrollFrame, offset)
+		NotebookFrame.listScrollFrame.ScrollBar:SetValue(offset * LIST_BUTTON_HEIGHT)
+	end
 
-	-- Temporary
 	for i = 1, LIST_BUTTON_COUNT do
-		local button = NotebookFrame.listButtons[i]
-		local note = self:GetNote(i)
+		local button = listButtons[i]
+		local title = Notebook.sortedTitles[i + offset]
+		local note = title and Notebook.notes[title]
 		if note then
-			self:Print("---", i, note.title)
-			button:SetID(i)
-			button:SetText(note.title)
+			Notebook:Print("---", i + offset, title)
+			button:SetText(title)
+			-- TODO: asterisk if not saved
+			-- TODO: color by known / unknown
 			button:Show()
 		else
-			self:Print("---")
+			Notebook:Print("---", i)
 			button:Hide()
-			button:SetID(0)
-			button:SetText("")
+			button:SetText(nil)
 			button.tooltipText = nil
 		end
 	end
+
+	FauxScrollFrame_Update(NotebookFrame.listScrollFrame, numNotes, LIST_BUTTON_COUNT, LIST_BUTTON_HEIGHT)
+	NotebookFrame:ShowNote(selectedNote)
 end
+
+------------------------------------------------------------------------
+-- Display a specific note
+
+-- TODO: move to core
+Notebook.state = {}
+
+function NotebookFrame:ShowNote(title)
+	Notebook:Print("ShowNote", title)
+	local note = Notebook.notes[title]
+	selectedNote = note or nil
+
+	-- Update list buttons
+	for i = 1, LIST_BUTTON_COUNT do
+		local button = listButtons[i]
+		if button:GetText() == selectedNote then
+			button:LockHighlight()
+		else
+			button:UnlockHighlight()
+		end
+	end
+
+	-- TODO: handle non-known notes
+
+	-- Update "Can Send" checkbox (checked, enabled/known)
+	self:UpdateCanSend(note and note.canSend, true)
+
+	-- Update text area (text, known)
+	self:SetText(note and note.text or "", true)
+end
+
+------------------------------------------------------------------------
+-- Update various parts of the frame
+
+function NotebookFrame:SetText(text, known)
+	-- TODO: handle non-known notes
+	-- For notes that are known (known is true) we use the scrolling editbox
+	-- to show the text.  In order to get the scrolling editbox to play nicely
+	-- when we reset its text contents (specifically to force the scrollbar to
+	-- go to the top of the text rather than the bottom) we have to jump
+	-- through a few hoops, which is done between this function and the
+	-- editbox scripts in the XML file.  Basically the function here sets some
+	-- flags to reset the cursor position when the actual text update occurs,
+	-- or when a cursor update occurs (if the text didn't change), and in the
+	-- case where neither the text or cursor position changed, we set a
+	-- private variable that ScrollingEdit_OnUpdate uses (normally set by the
+	-- ScrollingEdit_OnCursorChanged function) and trigger an OnUpdate call.
+	-- The case where we are setting the editbox to the empty string has to be
+	-- dealt with as a special case due to the way the editbox doesn't perform
+	-- updates correctly if it is empty.  To avoid that we set instead a
+	-- special character to force a text update, and set a flag to request the
+	-- XML script code to reset the contents back to empty (which will occur
+	-- after the editbox scrolling, etc., has been updated).
+	-- For notes that are not known (known is nil or false) we instead use the
+	-- scrolling textbox to display the text, which is a little simpler to
+	-- reset to the top of the text when needed.
+	-- This function also stores the id of the note being edited or displayed
+	-- in NotebookFrame object itself, so that this can be checked for easily
+	-- when changing between tabs or knowing when to start an edit.
+	self.textScrollFrame:Hide()
+	self.editScrollFrame:Show()
+	self.editBox:ClearFocus()
+	if text == "" then
+		-- Set a fake string into the editbox, noting that it is important
+		-- that this string doesn't match what the editbox has in it
+		-- already (or else it won't generate a OnTextUpdate event) so we
+		-- use a non-visible non-enterable character simply to avoid
+		-- having to check the current contents.
+		self.editBox.textResetToEmpty = true
+		self.editBox:SetText("\032")
+	else
+		self.editBox:SetText(text)
+		self.editBox:SetCursorPosition(0)
+	end
+	self.editBox.textReset = true
+	self.editBox.cursorOffset = 0
+	ScrollingEdit_OnUpdate(self.editBox, 0, self.editScrollFrame)
+end
+
+function NotebookFrame:SetCanSendCheckbox(checked, enabled)
+	local check = self.canSendCheckButton
+	check:SetEnabled(enabled)
+	check:SetChecked(checked)
+	if enabled and GameTooltip:IsOwned(check) then
+		GameTooltip:SetText(checked and self.tooltipTextOn or self.tooltipTextOff)
+	end
+end		
 
 ------------------------------------------------------------------------
 -- Initialize frame properties
@@ -84,6 +187,121 @@ end)
 function NotebookFrame:Setup()
 	Notebook:Print("Frame:Setup")
 	self.Setup = nil
+
+	-- Custom dialog ----------------------------------------------------
+
+	local dialog = CreateFrame("Frame", "NotebookDialog", UIParent)
+	dialog:SetSize(320, 72)
+	dialog:SetBackdrop({
+	  bgFile = "Interface\\CharacterFrame\\UI-Party-Background", tile = true, tileSize = 32,
+	  edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", edgeSize = 32,
+	  insets = { left = 11, right = 12, top = 12, bottom = 11 }
+	})
+	dialog:Hide()
+
+	dialog.text = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	dialog.text:SetPoint("TOPLEFT", 15, -16)
+	dialog.text:SetPoint("TOPRIGHT", -15, -16)
+
+	dialog.editBox = CreateFrame("EditBox", "$parentEditBox", dialog)
+	dialog.editBox:SetSize(130, 32)
+	dialog.editBox:SetPoint("BOTTOM", 0, 45)
+
+	dialog.editBox.bgLeft = dialog.editBox:CreateTexture(nil, "BACKGROUND")
+	dialog.editBox.bgLeft:SetTexture([[Interface\ChatFrame\UI-ChatInputBorder-Left2]])
+	dialog.editBox.bgLeft:SetPoint("LEFT", -10, 0)
+	dialog.editBox.bgLeft:SetSize(32, 32)
+
+	dialog.editBox.bgRight = dialog.editBox:CreateTexture(nil, "BACKGROUND")
+	dialog.editBox.bgRight:SetTexture([[Interface\ChatFrame\UI-ChatInputBorder-Right2]])
+	dialog.editBox.bgRight:SetPoint("RIGHT", 10, 0)
+	dialog.editBox.bgRight:SetSize(32, 32)
+
+	dialog.editBox.bgMiddle = dialog.editBox:CreateTexture(nil, "BACKGROUND")
+	dialog.editBox.bgMiddle:SetTexture([[Interface\ChatFrame\UI-ChatInputBorder-Mid2]])
+	dialog.editBox.bgMiddle:SetHorizTile(true)
+	dialog.editBox.bgMiddle:SetPoint("LEFT", dialog.editBox.bgLeft, "RIGHT")
+	dialog.editBox.bgMiddle:SetPoint("RIGHT", dialog.editBox.bgRight, "LEFT")
+	dialog.editBox.bgMiddle:SetHeight(32)
+
+	dialog.hint = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	dialog.hint:SetPoint("TOP", editBox, "BOTTOM")
+	dialog.hint:SetWidth(130)
+
+	dialog.editBox:HookScript("OnTextChanged", function(self, userInput)
+		local text = strtrim(self:GetText() or "")
+		if strlen(text) == 0 then
+			dialog.hint:SetText("")
+			dialog.accept:Disable()
+		elseif self.mode == "ADD" then
+			if Notebook.notes[text] then
+				dialog.hint:SetText(L["You already have a note with that title!"])
+				dialog.accept:Disable()
+			else
+				dialog.hint:SetText("")
+				dialog.accept:Enable()
+			end
+		elseif self.mode == "RENAME" then
+			if Notebook.notes[text] and text ~= self.note then
+				dialog.hint:SetText(L["You already have a note with that title!"])
+				dialog.accept:Disable()
+			else
+				dialog.hint:SetText("")
+				dialog.accept:Enable()
+			end
+		end
+		-- TODO: mode SEND has channel dropdown + target editbox
+	end)
+	dialog.editBox:SetScript("OnEnterPressed", function(self)
+		self:GetParent().accept:Click()
+	end)
+	dialog.editBox:SetScript("OnEscapePressed", function(self)
+		self:GetParent().cancel:Click()
+	end)
+
+	dialog.accept = CreateFrame("Button", "$parentAcceptButton", dialog, "StaticPopupButtonTemplate")
+	dialog.accept:SetPoint("BOTTOMRIGHT", dialog, "BOTTOM", -6, 16)
+	dialog.accept:SetText(ACCEPT)
+	dialog.accept:SetScript("OnClick", function(self)
+		local text = strtrim(self:GetParent().editBox:GetText() or "")
+		if strlen(text) > 0 then
+			if dialog.mode == "ADD" then
+				Notebook:AddNote(text)
+			elseif dialog.mode == "RENAME" and text ~= dialog.note then
+				Notebook:EditNote(dialog.note, text)
+			end
+			-- TODO: mode SEND has channel dropdown + target editbox
+		end
+		self:GetParent():Hide()
+	end)
+
+	dialog.cancel = CreateFrame("Button", "$parentCancelButton", dialog, "StaticPopupButtonTemplate")
+	dialog.cancel:SetPoint("LEFT", dialog.accept, "RIGHT", 13, 0)
+	dialog.cancel:SetText(CANCEL)
+	dialog.cancel:SetScript("OnClick", function(self)
+		self:GetParent():Hide()
+	end)
+
+	dialog:SetScript("OnShow", function(self)
+		self.editBox:SetText("")
+		self.editBox.autoCompleteParams = nil
+		self.hint:SetText("")
+		self.accept:Disable()
+		if self.mode == "ADD" then
+			self.text:SetText(L["Enter a title for your new note:"])
+		elseif self.mode == "RENAME" then
+			self.text:SetText(NORMAL_FONT_COLOR_CODE .. self.note .. "|r|n" .. L["Enter a new title for this note:"])
+		end
+		-- TODO: mode SEND has channel dropdown + target editbox
+	end)
+	dialog:SetScript("OnHide", function(self)
+		self.mode, self.note, self.channel = nil, nil, nil
+		self.text:SetText("")
+		self.editBox:SetText("")
+		self.hint:SetText("")
+	end)
+
+	self.dialog = dialog
 
 	-- Background textures ----------------------------------------------
 
@@ -161,13 +379,13 @@ function NotebookFrame:Setup()
 			-- editbox (editBox only updates the actual cursor position when there
 			-- is text in the editBox.  Also, if the editbox was empty, then give
 			-- it a temporary space character while we are moving it.
-			if NotebookFrame.editBox.hasFocus then
-				NotebookFrame.editBox.hadFocus = true
-				NotebookFrame.editBox:ClearFocus()
+			if editBox.hasFocus then
+				editBox.hadFocus = true
+				editBox:ClearFocus()
 			end
-			if NotebookFrame.EditBox:GetNumLetters() == 0 then
-				NotebookFrame.editBox.wasEmpty = true
-				NotebookFrame.EditBox:SetText(" ")
+			if editBox:GetNumLetters() == 0 then
+				editBox.wasEmpty = true
+				editBox:SetText(" ")
 			end
 		end
 	end)
@@ -178,7 +396,6 @@ function NotebookFrame:Setup()
 			NotebookFrame:SetUserPlaced(false)
 			NotebookFrame.isMoving = nil
 			-- Restore the editbox's focus and empty status if needed
-			local editBox = NotebookFrame.editBox
 			if editBox.wasEmpty then
 				editBox:SetText("")
 				editBox.wasEmpty = nil
@@ -196,7 +413,6 @@ function NotebookFrame:Setup()
 			NotebookFrame:SetUserPlaced(false)
 			NotebookFrame.isMoving = nil
 			-- Restore the editbox's empty status if needed
-			local editBox = NotebookFrame.editBox
 			if editBox.wasEmpty then
 				editBox:SetText("")
 				editBox.wasEmpty = nil
@@ -268,6 +484,8 @@ function NotebookFrame:Setup()
 
 	new:SetScript("OnClick", function(self)
 		-- TODO: Notebook.Frame_NewButtonOnClick
+		dialog.mode = "ADD"
+		dialog:Show()
 	end)
 
 	-- Can Send checkbox ------------------------------------------------
@@ -297,7 +515,7 @@ function NotebookFrame:Setup()
 		end
 		CloseDropDownMenus()
 
-		local note, index = Notebook:GetNote(selectedNoteIndex)
+		local note = Notebook.notes[selectedNote]
 		if note then
 			note.canSend = checked
 		end
@@ -358,6 +576,10 @@ function NotebookFrame:Setup()
 	local function listButton_OnClick(self, button)
 		PlaySound("igMainMenuOptionCheckBoxOn")
 		-- TODO: Notebook.Frame_ListButtonOnClick
+		local thisNote = self:GetText()
+		if thisNote ~= selectedNote then
+			NotebookFrame:ShowNote(thisNote)
+		end
 	end
 
 	local function ColorizeName(name, class) -- TODO: move this to core utilities?
@@ -366,16 +588,21 @@ function NotebookFrame:Setup()
 	end
 
 	local function listButton_OnEnter(self)
-		local note = NotebookNotes[self:GetID()]
+		local note = Notebook.notes[self:GetText()]
 		if note then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 			GameTooltip:SetText(format(L["%d characters"], strlenutf8(note.text)))
-			GameTooltip:AddLine(format(L["Last changed %s by %s"], note.date, ColorizeName(note.author, note.authorClass)), 1, 1, 1)
+			if note.author == Notebook.player then
+				GameTooltip:AddLine(format(L["Last updated %s"], note.date))
+			else
+				GameTooltip:AddLine(format(L["Last updated %s by %s"], note.date, ColorizeName(note.author, note.authorClass)), 1, 1, 1)
+			end
+			-- TODO: add not saved, last sent, etc
 			GameTooltip:Show()
 		end
 	end
 
-	self.listButtons = setmetatable({}, { __index = function(t, i)
+	listButtons = setmetatable({}, { __index = function(t, i)
 		local button = CreateFrame("Button", "NotebookFrameListButton"..i, listFrame)
 		button:SetSize(298, LIST_BUTTON_HEIGHT)
 
@@ -413,21 +640,20 @@ function NotebookFrame:Setup()
 		return button
 	end })
 
+	self.listButtons = listButtons
+
 	-- List frame scroll bar --------------------------------------------
 
-	local scrollFrame = CreateFrame("ScrollFrame", "NotebookFrameScrollFrame", listFrame, "UIPanelScrollFrameTemplate")
-	scrollFrame:SetPoint("TOPLEFT", 0, -2)
-	scrollFrame:SetSize(296, 112)
-	self.scrollFrame = scrollFrame
+	local listScrollFrame = CreateFrame("ScrollFrame", "$parentScrollFrame", listFrame, "FauxScrollFrameTemplate")
+	listScrollFrame:SetPoint("TOPLEFT", 0, -2)
+	listScrollFrame:SetSize(296, 112)
+	self.listScrollFrame = listScrollFrame
 
-	local scrollChild = CreateFrame("Frame", "NotebookFrameScrollChild", scrollFrame)
-	scrollChild:SetSize(296, 112)
-	scrollFrame:SetScrollChild(scrollChild)
-	self.scrollChild = scrollChild
+	self.listScrollChild = listScrollFrame:GetScrollChild()
+	self.listScrollChild:SetSize(296, 112)
 
-	scrollFrame:SetScript("OnVerticalScroll", function(self, offset)
-		-- TODO
-		-- FauxScrollFrame_OnVerticalScroll(self, offset, NOTEBOOK_LIST_BUTTON_HEIGHT, Notebook.Frame_UpdateList)
+	listScrollFrame:SetScript("OnVerticalScroll", function(self, offset)
+		FauxScrollFrame_OnVerticalScroll(self, offset, LIST_BUTTON_HEIGHT, Notebook.UpdateFrame)
 	end)
 
 	-- Description frame ------------------------------------------------
@@ -438,8 +664,6 @@ function NotebookFrame:Setup()
 	self.descriptionFrame = description
 
 	-- Edit scroll frame ------------------------------------------------
-
-	local editBox
 
 	local editScroll = CreateFrame("ScrollFrame", "NotebookFrameEditScrollFrame", description)
 	editScroll:SetPoint("TOPLEFT")
@@ -523,7 +747,7 @@ function NotebookFrame:Setup()
 	end)
 
 	editBox:SetScript("OnEditFocusGained", function(self)
-		if not selectedNoteIndex then
+		if not selectedNote then
 			return self:ClearFocus()
 		end
 		self.textReset = nil
