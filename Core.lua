@@ -53,51 +53,34 @@ function Notebook:OnLogin()
 		-- Import notes from old saved variable
 		for title, note in pairs(NotebookState.Notes) do
 			self:Print("--- old note:", title)
-			--[[
-			tinsert(self.notes, {
-				title     = self:ConstructUniqueTitle(title),
-				text      = note.description,
-				created   = "20"..note.date, -- old YY-MM-DD to new YYYY-MM-DD
-				createdBy = note.author,
-				canSend   = note.send,
-			})
-			]]
+			if not self.notes[title] then
+				self.notes[title] = {
+					text    = note.description,
+					date    = note.date,
+					author  = note.author,
+					canSend = note.send,
+				}
+				print("--- imported")
+			else
+				print("--- already exists")
+			end
 		end
 	end
 
 	if firstRun then
 		self:Print("--- First run")
-		tinsert(self.notes, {
-			title     = L["Welcome to Notebook!"],
-			text      = L["WELCOME_NOTE_TEXT"],
-			created   = "2005-12-24",
-			createdBy = "Cirk",
-		})
+		self.notes[L["Welcome to Notebook!"]] = {
+			text   = L["WELCOME_NOTE_TEXT"],
+			date   = "05-12-24",
+			author = "Cirk",
+		}
 	end
-end
 
-------------------------------------------------------------------------
---- Utility function to retrieve a note by its title.
--- @param title (string) Title of the note to retrieve
-
-function Notebook:GetNoteByTitle(title)
-	for i = 1, #self.notes do
-		if self.notes[i].title == title then
-			return self.notes[i], i
-		end
+	self.sortedTitles = {}
+	for title in pairs(self.notes) do
+		tinsert(self.sortedTitles, title)
 	end
-end
-
-------------------------------------------------------------------------
---- Utility function to retrieve a note by its title or index.
--- @param identifier (string or number) Title or index of the note to retrieve
-
-function Notebook:GetNote(identifier)
-	if type(identifier) == "number" then
-		return self.notes[identifier], identifier
-	else
-		return self:GetNoteByTitle(identifier)
-	end
+	sort(self.sortedTitles)
 end
 
 ------------------------------------------------------------------------
@@ -108,10 +91,8 @@ end
 function Notebook:ConstructUniqueTitle(title, count)
 	title = title and strtrim(title) or L["Untitled Note"]
 	local temp = count and (title .. "(" .. count .. ")") or title
-	for i = 1, #self.notes do
-		if self.notes[i].title == temp then
-			return self:ConstructUniqueTitle(title, count and (count + 1) or 2)
-		end
+	if self.notes[title] == temp then
+		return self:ConstructUniqueTitle(title, count and (count + 1) or 2)
 	end
 	return temp
 end
@@ -122,60 +103,72 @@ end
 -- @param text (string) (optional) Text contents of the note
 
 function Notebook:AddNote(title, text)
-	tinsert(self.notes, {
-		title       = self:ConstructUniqueTitle(title),
+	self:Print("AddNote", title, "=", text)
+	title = self:ConstructUniqueTitle(title)
+	self.notes[title] = {
 		text        = text,
-		date        = date("%Y-%m-%d"),
+		date        = date("%y-%m-%d"),
 		author      = PLAYER_NAME,
 		authorRealm = PLAYER_REALM,
 		authorClass = PLAYER_CLASS,
-	})
+	}
 	self:Update()
 end
 
 ------------------------------------------------------------------------
 --- API function to edit an existing note in the database.
 -- Values not specified will remain unchanged.
--- @param identifier (string or number) Current title or index or the note
--- @param title (string) (optional) New title for the note
--- @param text (string) (optional) New text contents for the note
+-- @param title (string) Current title of the note
+-- @param newTitle (string) (optional) New title for the note; if not provided, the current title will be preserved
+-- @param newText (string) (optional) New text contents for the note; if not provided, the current text will be preserved
 
-function Notebook:EditNote(identifier, title, text)
-	local note, index = self:GetNote(identifier)
+function Notebook:EditNote(title, newTitle, newText)
+	newTitle = newTitle and strtrim(newTitle)
+	newText = newText and strtrim(newText)
+
+	local note = self.notes[title]
+	if newTitle == title or (note and newText == note.text) then
+		return
+	end
+	
 	if not note then
-		self:AddNote(title, text)
+		self:AddNote(newTitle, newText)
 	else
-		note.title       = title and self:ConstructUniqueTitle(title) or note.title
-		note.text        = text or note.text
+		note.text        = newText or note.text
 		note.date        = date("%Y-%m-%d")
 		note.author      = PLAYER_NAME
 		note.authorRealm = PLAYER_REALM
 		note.authorClass = PLAYER_CLASS
+		
+		if newTitle and newTitle ~= title then
+			self.notes[title] = nil
+			self.notes[self:ConstructUniqueTitle(newTitle)] = note
+		end
 	end
 	self:Update()
 end
 
 ------------------------------------------------------------------------
 --- API function to remove an existing note from the database.
--- @param identifier (string or number) Current title or index or the note
+-- @param title (string) Title of the note to send
 
-function Notebook:DeleteNote(identifier)
-	local note, index = self:GetNote(identifier)
+function Notebook:DeleteNote(title)
+	local note = self.notes[title]
 	if note then
-		tremove(self.notes, index)
+		self.notes[title] = nil
 	end
 	self:Update()
 end
 
 ------------------------------------------------------------------------
 --- API function to send a note over a chat channel.
--- @param identifier (string or number) Title or index or the note to send
+-- @param title (string) Title of the note to send
 -- @param channel (string) The type of chat channel to which the note should be sent
 -- @param target (string or number) The number of the channel, or name of the player, to whom the note should be sent
 
-function Notebook:SendNote(identifier, channel, target)
-	local note, index = self:GetNote(identifier)
-	if note then
+function Notebook:SendNote(title, channel, target)
+	local note = self.notes[title]
+	if note and note.canSend then
 		-- TODO
 	end
 end
@@ -183,12 +176,14 @@ end
 ------------------------------------------------------------------------
 -- Internal function to be called when notes change.
 
-local function sortByTitle(a, b)
-	return a and b and strlower(a.title) < strlower(b.title)
-end
-
 function Notebook:Update()
 	self:Print("Update")
-	table.sort(self.notes, sortByTitle)
+
+	wipe(self.sortedTitles)
+	for title in pairs(self.notes) do
+		tinsert(self.sortedTitles, title)
+	end
+	sort(self.sortedTitles)
+
 	self:UpdateFrame() -- defined in Frame.lua
 end
