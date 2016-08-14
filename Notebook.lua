@@ -62,7 +62,6 @@ local _colorTextDisabled = { r = 0.5, g = 0.5,  b = 0.5 }			-- Light grey
 ------------------------------------------------------------------------
 --	Local variables
 
-local NotebookFrame				-- The frame pointer
 local _debugFrame					-- debug output chat frame
 
 local _serverName = GetRealmName()
@@ -315,11 +314,10 @@ end
 
 function Notebook:SaveData()
 	-- Saves the currently known entries in the Notebook (not-known are not saved)
-	local notes = {}
 	for i = 1, #_notesList do
 		local ndata = _notesList[i]
 		if ndata.known then
-			local saveNote = {}
+			local saveNote = NotebookState.Notes[ndata.title] or {}
 			saveNote.author = ndata.author
 			saveNote.date = ndata.date
 			saveNote.sent = ndata.sent
@@ -338,11 +336,9 @@ function Notebook:SaveData()
 			if ndata.send then
 				saveNote.send = 1
 			end
-			notes[ndata.title] = saveNote
+			NotebookState.Notes[ndata.title] = saveNote
 		end
 	end
-	NotebookState.Notes = notes
-	NotebookState.Servers = nil
 end
 
 function Notebook:LoadOneNote(title, ndata)
@@ -470,6 +466,7 @@ function Notebook:AddNote(title, author, date, description, known, recent, send)
 	newNote.id = _notesLastID
 	_notesCount = _notesCount + 1
 	_notesList[_notesCount] = newNote
+	NotebookState.Notes[title] = newNote
 	return newNote
 end
 
@@ -484,6 +481,8 @@ function Notebook:RemoveNoteByID(id)
 		local ndata = _notesList[index]
 		if ndata.id ~= id then
 			tinsert(newList, ndata)
+		else
+			NotebookState.Notes[ndata.title] = nil
 		end
 		_notesList[index] = nil
 	end
@@ -495,6 +494,10 @@ function Notebook:Rename(ndata, title)
 	-- Renames the indicated note entry with the given title.  It is the
 	-- caller's responsibility to ensure that the new title is valid and
 	-- unique.
+	local savedNote = NotebookState[ndata.title]
+	NotebookState[ndata.title] = nil
+	NotebookState[title] = savedNote
+
 	ndata.title = title
 	if _addSavedToRecent then
 		ndata.recent = true
@@ -817,7 +820,6 @@ function Notebook:ADDON_LOADED(addon)
 		NotebookState.Notes = {}
 		_firstTimeLoad = true
 	end
-	_notesList = NotebookState.Notes
 
 	if IsLoggedIn() then
 		Notebook:PLAYER_LOGIN()
@@ -832,6 +834,8 @@ function Notebook:PLAYER_LOGIN()
 	if _firstTimeLoad then
 		Notebook:AddNote(_firstTimeNote.title, _firstTimeNote.author, _firstTimeNote.date, _firstTimeNote.description, true, false, false)
 	end
+
+	Notebook.Frame_OnLoad(NotebookFrame)
 	Notebook:FilterList()
 	Notebook.Frame_UpdateList()
 
@@ -1341,6 +1345,7 @@ function Notebook.Frame_SaveButtonOnClick(self, ndata)
 			Notebook:FilterList()
 			Notebook.Frame_UpdateList()
 			Notebook.Frame_UpdateButtons(nil, true)
+			Notebook:SaveData()
 		end
 	end
 end
@@ -1883,20 +1888,6 @@ end
 
 function Notebook.OnEvent(self, event, ...)
 	return Notebook[event] and Notebook[event](Notebook, ...) or Notebook:ProcessChatMessage(event, ...)
-end
-
-------------------------------------------------------------------------
---	OnLoad function
-------------------------------------------------------------------------
-
-function Notebook.OnLoad(self)
-	-- Record our frame pointer for later
-	NotebookFrame = self
-
-	-- Register for player events
-	NotebookFrame:RegisterEvent("ADDON_LOADED")
-	NotebookFrame:RegisterEvent("PLAYER_LOGIN")
-	NotebookFrame:RegisterEvent("PLAYER_LOGOUT")
 end
 
 ------------------------------------------------------------------------

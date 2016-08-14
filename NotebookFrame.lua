@@ -283,6 +283,7 @@ canSend:SetScript("OnClick", function(self, button)
 		else
 			ndata.send = true
 		end
+		Notebook:SaveData()
 	end
 end)
 
@@ -595,5 +596,8 @@ NotebookFrame.DropDown = dropdown
 
 NotebookFrame:SetScript("OnEvent", Notebook.OnEvent)
 
-Notebook.OnLoad(NotebookFrame)
+NotebookFrame:RegisterEvent("ADDON_LOADED")
+NotebookFrame:RegisterEvent("PLAYER_LOGIN")
+NotebookFrame:RegisterEvent("PLAYER_LOGOUT")
+
 Notebook.Frame_OnLoad(NotebookFrame)

@@ -1,3 +1,8 @@
+### Version 7.0.3.0
+
+* Updated for WoW 7.0
+* Fixed an issue causing notes to sometimes be forgotten (hopefully)
+
 ### Version 6.1.0.10
 
 * Updated for WoW 6.1
