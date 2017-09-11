@@ -2,7 +2,7 @@
 	Notebook
 	Allows you to record and share notes in-game.
 	Copyright (c) 2005-2008 Cirk of Doomhammer EU. All rights reserved.
-	Copyright (c) 2012-2016 Phanx <addons@phanx.net>. All rights reserved.
+	Copyright (c) 2012-2017 Phanx <addons@phanx.net>. All rights reserved.
 	https://github.com/Phanx/Notebook
 	https://mods.curse.com/addons/wow/notebook
 	https://www.wowinterface.com/downloads/info4544-Notebook.html
@@ -264,10 +264,10 @@ canSend:SetScript("OnLeave", GameTooltip_Hide)
 canSend:SetScript("OnClick", function(self, button)
 	local text
 	if self:GetChecked() then
-		PlaySound("igMainMenuOptionCheckBoxOn")
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 		text = self.tooltipOnText
 	else
-		PlaySound("igMainMenuOptionCheckBoxOff")
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 		text = self.tooltipOffText
 	end
 	if text and GameTooltip:IsOwned(self) then
@@ -382,7 +382,7 @@ local function createListButton(id)
 
 	button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	button:SetScript("OnClick", function(self, button)
-		PlaySound("igMainMenuOptionCheckBoxOn")
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 		Notebook.Frame_ListButtonOnClick(self, button)
 	end)
 	button:SetScript("OnEnter", function(self)
