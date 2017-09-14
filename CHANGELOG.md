@@ -1,3 +1,7 @@
+### Version 7.3.0.1
+
+* Fixed an error that occurred when confirmation dialogs are shown
+
 ### Version 7.3.0.0
 
 * Updated for WoW 7.3

@@ -205,7 +205,7 @@ StaticPopupDialogs["NOTEBOOK_REMOVE_CONFIRM"] = {
 	text = L.CONFIRM_REMOVE_FORMAT,
 	button1 = YES,
 	button2 = NO,
-	sound = "igCharacterInfoOpen",
+	sound = SOUNDKIT.IG_CHARACTER_INFO_OPEN,
 	OnAccept = function(self, data)
 		Notebook:HandlePopupInput("CONFIRM", data)
 	end,
@@ -220,7 +220,7 @@ StaticPopupDialogs["NOTEBOOK_UPDATE_CONFIRM"] = {
 	text = L.CONFIRM_UPDATE_FORMAT,
 	button1 = YES,
 	button2 = NO,
-	sound = "igCharacterInfoOpen",
+	sound = SOUNDKIT.IG_CHARACTER_INFO_OPEN,
 	OnAccept = function(self, data)
 		Notebook:HandlePopupInput("UPDATE", data)
 	end,
@@ -235,7 +235,7 @@ StaticPopupDialogs["NOTEBOOK_SERVER_CONFIRM"] = {
 	text = L.CONFIRM_SERVER_CHANNEL_FORMAT,
 	button1 = YES,
 	button2 = NO,
-	sound = "igCharacterInfoOpen",
+	sound = SOUNDKIT.IG_CHARACTER_INFO_OPEN,
 	OnAccept = function(self, data)
 		Notebook:HandlePopupInput("SERVER", data)
 	end,
